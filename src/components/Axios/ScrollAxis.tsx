@@ -61,26 +61,23 @@ export const ScrollAxis = ({
     const trackThickness = Math.max(1, requestedTrackThickness);
     const trackBoundary = parseBoundaryOffset(scrollBar.boundaryOffset);
     const thumbBoundary = parseBoundaryOffset(thumb.boundaryOffset);
-    const requestedCrossAxisOccupation =
-        trackBoundary.start + trackThickness + trackBoundary.end;
-    const maximumCrossAxisOccupation = Math.max(0, metrics.clientSize - 1);
-    const crossAxisOccupation = hasCrossAxis
-        ? clamp(requestedCrossAxisOccupation, 0, maximumCrossAxisOccupation)
+    const crossAxisCornerSize = hasCrossAxis
+        ? trackThickness +
+          (positionMode === "before" ? trackBoundary.start : trackBoundary.end)
         : 0;
-    const availableMainStart =
-        hasCrossAxis && positionMode === "before" ? crossAxisOccupation : 0;
-    const availableMainSize = Math.max(
-        0,
-        metrics.clientSize - crossAxisOccupation,
-    );
-    const trackCenter = availableMainStart + availableMainSize / 2;
+
+    const trackCenter = metrics.clientSize / 2;
     const requestedTrackLength = resolveTrackLength(
         scrollBar.heightTrack,
         metrics.clientSize,
     );
+    const maximumTrackLength = Math.max(
+        0,
+        metrics.clientSize - crossAxisCornerSize * 2,
+    );
     const trackLength =
-        availableMainSize > 0
-            ? clamp(requestedTrackLength, 1, availableMainSize)
+        maximumTrackLength > 0
+            ? clamp(requestedTrackLength, 1, maximumTrackLength)
             : 0;
     const fittedThumbMainInsets = fitInsetsWithinSize(
         thumbBoundary.start,
@@ -254,6 +251,7 @@ export const ScrollAxis = ({
         axis === "y"
             ? {
                   position: "absolute",
+
                   top: trackCenter,
                   transform: "translateY(-50%)",
 
@@ -272,8 +270,10 @@ export const ScrollAxis = ({
               }
             : {
                   position: "absolute",
+
                   left: trackCenter,
                   transform: "translateX(-50%)",
+
                   width: trackLength,
                   height: trackThickness,
 
