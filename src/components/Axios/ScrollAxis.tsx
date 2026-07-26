@@ -291,22 +291,38 @@ export const ScrollAxis = ({
     const thumbStyle: React.CSSProperties =
         axis === "y"
             ? {
-                  top: thumbPosition,
+                  top: 0,
+                  left: "50%",
+
+                  width: thumbCrossSize,
                   height: thumbSize,
 
-                  //* horizontal center
-                  left: "50%",
-                  width: thumbCrossSize,
-                  transform: "translateX(-50%)",
+                  transform: `
+                  translate3d(
+                      -50%,
+                      ${thumbPosition}px,
+                      0
+                  )
+              `,
+
+                  willChange: "transform",
               }
             : {
-                  left: thumbPosition,
-                  width: thumbSize,
-
-                  //* vertical center
                   top: "50%",
+                  left: 0,
+
+                  width: thumbSize,
                   height: thumbCrossSize,
-                  transform: "translateY(-50%)",
+
+                  transform: `
+                  translate3d(
+                      ${thumbPosition}px,
+                      -50%,
+                      0
+                  )
+              `,
+
+                  willChange: "transform",
               };
     //* STYLES ==================================================================
 
