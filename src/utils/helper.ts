@@ -5,7 +5,7 @@ import {
     ParsedOffset,
 } from "../types/config/axis.type";
 import { BoundaryOffset } from "../types/config/general.type";
-import { HeightTrackType } from "../types/config/scrollbar.type";
+import { HeightTrackType, ScrollBarMode } from "../types/config/scrollbar.type";
 import { ScrollToFutureThumb } from "../types/config/thumb.type";
 import { MAX_THUMB_RATIO, MIN_THUMB_SIZE } from "./constants";
 
@@ -241,4 +241,54 @@ export const resolveScrollingElement = (el: HTMLElement): HTMLElement => {
 
 export const isPageScrollTarget = (el: HTMLElement): boolean =>
     typeof document !== "undefined" &&
-    (el === document.body || el === document.documentElement);
+    (el === document.body ||
+        el === document.documentElement ||
+        el === document.scrollingElement);
+
+const allowsAxisScroll = (element: HTMLElement, axis: Axis): boolean => {
+    const style = window.getComputedStyle(element);
+
+    const overflow = axis === "x" ? style.overflowX : style.overflowY;
+
+    return /^(auto|scroll|overlay)$/.test(overflow);
+};
+
+export const resolveActualScrollTarget = (
+    element: HTMLElement,
+    mode: ScrollBarMode,
+): HTMLElement => {
+    const scrollingElement =
+        document.scrollingElement instanceof HTMLElement
+            ? document.scrollingElement
+            : document.documentElement;
+
+    if (
+        element === document.body ||
+        element === document.documentElement ||
+        element === document.scrollingElement
+    ) {
+        return scrollingElement;
+    }
+
+    let current: HTMLElement | null = element;
+
+    while (current) {
+        const allowsX = allowsAxisScroll(current, "x");
+        const allowsY = allowsAxisScroll(current, "y");
+
+        const matches =
+            mode === "horizontal"
+                ? allowsX
+                : mode === "vertical"
+                  ? allowsY
+                  : allowsX || allowsY;
+
+        if (matches) {
+            return current;
+        }
+
+        current = current.parentElement;
+    }
+
+    return scrollingElement;
+};

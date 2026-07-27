@@ -8,6 +8,7 @@ import "./css/scroll.css";
 import { useElementScrollObserver } from "./hooks/useElementScrollObserver";
 import { useFuture } from "./hooks/useFuture";
 import { useMounted } from "./hooks/useMounted";
+import { useTargetRect } from "./hooks/useTargetRect";
 import type { ScrollToFutureInterface } from "./types/scroll-to-future.type";
 import { merge } from "./utils/merge";
 import { shouldUseNativeScrollbar } from "./utils/mobile-detect";
@@ -23,6 +24,7 @@ export const ScrollToFuture = ({
 }: ScrollToFutureInterface) => {
     const anchorRef = useRef<HTMLSpanElement | null>(null);
     const targetRef = useRef<HTMLElement | null>(null);
+    const overlayRef = useRef<HTMLDivElement | null>(null);
 
     const mounted = useMounted();
 
@@ -37,7 +39,7 @@ export const ScrollToFuture = ({
 
     const vars = variables(config.optionsTheme);
 
-    const mode = config.scrollBar?.mode ?? "both";
+    const mode = config.scrollBar.mode;
     const positionMode = config.scrollBar?.positionMode ?? "after";
 
     const superimposition = config.scrollBar?.superimposition ?? "over";
@@ -45,10 +47,8 @@ export const ScrollToFuture = ({
     const nativeScrollOnMobile = shouldUseNativeScrollbar() && nativeOnMobile;
 
     const metrics = useElementScrollObserver(findedTarget);
-    const overlayRef = useRef<HTMLDivElement | null>(null);
 
     const wantsY = mode === "vertical" || mode === "both";
-
     const wantsX = mode === "horizontal" || mode === "both";
 
     const showY = wantsY && metrics.y.canScroll;
@@ -73,11 +73,13 @@ export const ScrollToFuture = ({
         nativeOnMobile,
     });
 
+    useTargetRect(findedTarget, overlayRef);
+
     if (!mounted || nativeScrollOnMobile) {
         return null;
     }
 
-    const overlay = findedTarget && (
+    const overlay = findedTarget ? (
         <div ref={overlayRef} className="scroll-to-future__overlay">
             {showY && (
                 <ScrollAxis
@@ -85,8 +87,8 @@ export const ScrollToFuture = ({
                     axis="y"
                     target={findedTarget}
                     metrics={metrics.y}
-                    scrollBar={config.scrollBar!}
-                    thumb={thumb}
+                    scrollBar={config.scrollBar}
+                    thumb={config.thumb}
                     positionMode={positionMode}
                     superimposition={superimposition}
                     hasCrossAxis={showX}
@@ -99,15 +101,15 @@ export const ScrollToFuture = ({
                     axis="x"
                     target={findedTarget}
                     metrics={metrics.x}
-                    scrollBar={config.scrollBar!}
-                    thumb={thumb}
+                    scrollBar={config.scrollBar}
+                    thumb={config.thumb}
                     positionMode={positionMode}
                     superimposition={superimposition}
                     hasCrossAxis={showY}
                 />
             )}
         </div>
-    );
+    ) : null;
 
     return (
         <>

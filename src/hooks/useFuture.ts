@@ -36,29 +36,43 @@ export const useFuture = ({
         if (!mounted) return;
 
         let rafId: number | null = null;
+        let stopped = false;
+
+        const getPageTarget = (): HTMLElement =>
+            document.scrollingElement instanceof HTMLElement
+                ? document.scrollingElement
+                : document.documentElement;
 
         const resolveTarget = () => {
-            const nextTarget = target
-                ? target.current
-                : (anchorRef.current?.parentElement ?? null);
+            if (stopped) return;
 
-            if (nextTarget) {
-                targetRef.current = nextTarget;
-                setFindedTarget((previousTarget) =>
-                    previousTarget === nextTarget ? previousTarget : nextTarget,
-                );
-                return;
+            const explicitTarget = target?.current ?? null;
+            const parentTarget = anchorRef.current?.parentElement ?? null;
+
+            const nextTarget =
+                explicitTarget ?? parentTarget ?? getPageTarget();
+
+            targetRef.current = nextTarget;
+
+            setFindedTarget((previousTarget) =>
+                previousTarget === nextTarget ? previousTarget : nextTarget,
+            );
+
+            if (target && !explicitTarget) {
+                rafId = requestAnimationFrame(resolveTarget);
             }
-            rafId = requestAnimationFrame(resolveTarget);
         };
+
         resolveTarget();
 
         return () => {
+            stopped = true;
+
             if (rafId !== null) {
                 cancelAnimationFrame(rafId);
             }
         };
-    }, [mounted, target]);
+    }, [mounted, target, anchorRef, targetRef, setFindedTarget]);
 
     useEffect(() => {
         const el = targetRef.current;

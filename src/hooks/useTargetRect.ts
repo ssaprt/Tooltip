@@ -1,36 +1,41 @@
 import { type RefObject, useLayoutEffect } from "react";
+import { isPageScrollTarget } from "../utils/helper";
 
 export const useTargetRect = (
     target: HTMLElement | null,
     overlayRef: RefObject<HTMLDivElement | null>,
 ): void => {
     useLayoutEffect(() => {
-        const overlay = overlayRef.current;
-
-        if (!target || !overlay) {
-            return;
-        }
+        if (!target) return;
 
         const updatePosition = () => {
-            const currentOverlay = overlayRef.current;
+            const overlay = overlayRef.current;
 
-            if (!currentOverlay) {
+            if (!overlay) return;
+
+            if (isPageScrollTarget(target)) {
+                const width = window.visualViewport?.width ?? window.innerWidth;
+
+                const height =
+                    window.visualViewport?.height ?? window.innerHeight;
+
+                overlay.style.transform = "translate3d(0, 0, 0)";
+
+                overlay.style.width = `${width}px`;
+                overlay.style.height = `${height}px`;
+                overlay.style.visibility = "visible";
+
                 return;
             }
 
             const rect = target.getBoundingClientRect();
 
-            currentOverlay.style.transform = `
-                translate3d(
-                    ${rect.left}px,
-                    ${rect.top}px,
-                    0
-                )
-            `;
+            overlay.style.transform = `translate3d(${rect.left}px, ${rect.top}px, 0)`;
 
-            currentOverlay.style.width = `${rect.width}px`;
-            currentOverlay.style.height = `${rect.height}px`;
-            currentOverlay.style.visibility =
+            overlay.style.width = `${rect.width}px`;
+            overlay.style.height = `${rect.height}px`;
+
+            overlay.style.visibility =
                 rect.width > 0 && rect.height > 0 ? "visible" : "hidden";
         };
 
@@ -74,5 +79,5 @@ export const useTargetRect = (
 
             resizeObserver.disconnect();
         };
-    }, [overlayRef, target]);
+    }, [target, overlayRef]);
 };

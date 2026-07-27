@@ -139,10 +139,6 @@ export const hideNativeScrollbar = (
         return () => {};
     }
 
-    /*
-     * На телефонах и планшетах оставляем нативный scrollbar,
-     * если пользователь явно включил nativeOnMobile.
-     */
     if (nativeOnMobile && isMobileInputDevice()) {
         return () => {};
     }
