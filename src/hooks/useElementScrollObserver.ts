@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from "react";
-import { isPageScrollTarget } from "../utils/helper";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import { AxisMetrics, TargetMetrics } from "../types/config/axis.type";
 import { EMPTY_AXIS_METRICS } from "../utils/constants";
-import { useRefReady } from "./useRefReady";
+import { isPageScrollTarget } from "../utils/helper";
 
 const isSameAxisMetrics = (previous: AxisMetrics, next: AxisMetrics): boolean =>
     previous.scrollSize === next.scrollSize &&
@@ -12,35 +11,43 @@ const isSameAxisMetrics = (previous: AxisMetrics, next: AxisMetrics): boolean =>
     previous.canScroll === next.canScroll;
 
 const getActualScrollPosition = (...values: number[]): number =>
-    values.reduce((current, value) => {
-        return Math.abs(value) > Math.abs(current) ? value : current;
-    }, 0);
+    values.reduce(
+        (current, value) =>
+            Math.abs(value) > Math.abs(current) ? value : current,
+        0,
+    );
+
+const getEmptyMetrics = (): TargetMetrics => ({
+    x: {
+        ...EMPTY_AXIS_METRICS,
+    },
+    y: {
+        ...EMPTY_AXIS_METRICS,
+    },
+});
+
+const isInternalElement = (element: Element): boolean =>
+    element.matches("[data-scroll-to-future-overlay]") ||
+    element.closest("[data-scroll-to-future-overlay]") !== null;
 
 export const useElementScrollObserver = (
     target: HTMLElement | null | undefined,
 ): TargetMetrics => {
-    const [metrics, setMetrics] = useState<TargetMetrics>({
-        x: EMPTY_AXIS_METRICS,
-        y: EMPTY_AXIS_METRICS,
-    });
-
+    const [metrics, setMetrics] = useState<TargetMetrics>(getEmptyMetrics);
     const rafRef = useRef<number | null>(null);
-    const ready = useRefReady(target);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const targetElement = target;
 
         if (!targetElement) {
-            //eslint-disable-next-line
-            setMetrics({
-                x: EMPTY_AXIS_METRICS,
-                y: EMPTY_AXIS_METRICS,
-            });
+            setMetrics(getEmptyMetrics());
 
             return;
         }
 
         const pageScroll = isPageScrollTarget(targetElement);
+        let initialFrameId: number | null = null;
+        let secondInitialFrameId: number | null = null;
 
         const measure = () => {
             let nextX: AxisMetrics;
@@ -50,45 +57,37 @@ export const useElementScrollObserver = (
                 const root = document.documentElement;
                 const body = document.body;
                 const scrollingElement =
-                    document.scrollingElement as HTMLElement | null;
-
+                    document.scrollingElement instanceof HTMLElement
+                        ? document.scrollingElement
+                        : root;
                 const scrollWidth = Math.max(
                     root.scrollWidth,
                     body.scrollWidth,
-                    scrollingElement?.scrollWidth ?? 0,
+                    scrollingElement.scrollWidth,
                     targetElement.scrollWidth,
                 );
-
                 const scrollHeight = Math.max(
                     root.scrollHeight,
                     body.scrollHeight,
-                    scrollingElement?.scrollHeight ?? 0,
+                    scrollingElement.scrollHeight,
                     targetElement.scrollHeight,
                 );
-
                 const clientWidth =
                     window.visualViewport?.width ?? window.innerWidth;
-
                 const clientHeight =
                     window.visualViewport?.height ?? window.innerHeight;
-
-                /*
-                 * Важно: не читаем только window.scrollY.
-                 * body может быть самостоятельным overflow-контейнером.
-                 */
                 const scrollLeft = getActualScrollPosition(
                     window.scrollX,
                     root.scrollLeft,
                     body.scrollLeft,
-                    scrollingElement?.scrollLeft ?? 0,
+                    scrollingElement.scrollLeft,
                     targetElement.scrollLeft,
                 );
-
                 const scrollTop = getActualScrollPosition(
                     window.scrollY,
                     root.scrollTop,
                     body.scrollTop,
-                    scrollingElement?.scrollTop ?? 0,
+                    scrollingElement.scrollTop,
                     targetElement.scrollTop,
                 );
 
@@ -106,23 +105,23 @@ export const useElementScrollObserver = (
                     canScroll: scrollHeight - clientHeight > 1,
                 };
             } else {
+                const scrollWidth = targetElement.scrollWidth;
+                const scrollHeight = targetElement.scrollHeight;
+                const clientWidth = targetElement.clientWidth;
+                const clientHeight = targetElement.clientHeight;
+
                 nextX = {
-                    scrollSize: targetElement.scrollWidth,
-                    clientSize: targetElement.clientWidth,
+                    scrollSize: scrollWidth,
+                    clientSize: clientWidth,
                     scrollPos: targetElement.scrollLeft,
-                    canScroll:
-                        targetElement.scrollWidth - targetElement.clientWidth >
-                        1,
+                    canScroll: scrollWidth - clientWidth > 1,
                 };
 
                 nextY = {
-                    scrollSize: targetElement.scrollHeight,
-                    clientSize: targetElement.clientHeight,
+                    scrollSize: scrollHeight,
+                    clientSize: clientHeight,
                     scrollPos: targetElement.scrollTop,
-                    canScroll:
-                        targetElement.scrollHeight -
-                            targetElement.clientHeight >
-                        1,
+                    canScroll: scrollHeight - clientHeight > 1,
                 };
             }
 
@@ -142,34 +141,45 @@ export const useElementScrollObserver = (
         };
 
         const scheduleMeasure = () => {
-            if (rafRef.current !== null) return;
+            if (rafRef.current !== null) {
+                return;
+            }
 
             rafRef.current = requestAnimationFrame(() => {
                 rafRef.current = null;
+
                 measure();
             });
         };
 
-        measure();
-
         const resizeObserver = new ResizeObserver(scheduleMeasure);
 
-        if (pageScroll) {
-            resizeObserver.observe(document.documentElement);
-            resizeObserver.observe(document.body);
+        const observeElement = (element: Element) => {
+            if (isInternalElement(element)) {
+                return;
+            }
 
-            if (
-                targetElement !== document.documentElement &&
-                targetElement !== document.body
-            ) {
-                resizeObserver.observe(targetElement);
+            try {
+                resizeObserver.observe(element);
+            } catch {}
+        };
+
+        const observeTree = (root: Element) => {
+            observeElement(root);
+
+            root.querySelectorAll("*").forEach((element) => {
+                observeElement(element);
+            });
+        };
+
+        if (pageScroll) {
+            observeTree(document.documentElement);
+
+            if (document.body !== document.documentElement) {
+                observeTree(document.body);
             }
         } else {
-            resizeObserver.observe(targetElement);
-
-            Array.from(targetElement.children).forEach((child) => {
-                resizeObserver.observe(child);
-            });
+            observeTree(targetElement);
         }
 
         const mutationRoot = pageScroll
@@ -177,19 +187,43 @@ export const useElementScrollObserver = (
             : targetElement;
 
         const mutationObserver = new MutationObserver((mutations) => {
-            for (const mutation of mutations) {
-                if (mutation.type !== "childList") continue;
+            let shouldMeasure = false;
+
+            mutations.forEach((mutation) => {
+                if (
+                    mutation.target instanceof Element &&
+                    isInternalElement(mutation.target)
+                ) {
+                    return;
+                }
+
+                if (mutation.type === "attributes") {
+                    shouldMeasure = true;
+
+                    return;
+                }
 
                 mutation.addedNodes.forEach((node) => {
-                    if (!(node instanceof Element)) return;
+                    if (!(node instanceof Element)) {
+                        return;
+                    }
 
-                    try {
-                        resizeObserver.observe(node);
-                    } catch {}
+                    if (isInternalElement(node)) {
+                        return;
+                    }
+
+                    observeTree(node);
+                    shouldMeasure = true;
                 });
-            }
 
-            scheduleMeasure();
+                if (mutation.removedNodes.length > 0) {
+                    shouldMeasure = true;
+                }
+            });
+
+            if (shouldMeasure) {
+                scheduleMeasure();
+            }
         });
 
         mutationObserver.observe(mutationRoot, {
@@ -198,6 +232,28 @@ export const useElementScrollObserver = (
             attributes: true,
             attributeFilter: ["style", "class", "hidden"],
         });
+
+        const handleTransitionEnd = (event: Event) => {
+            if (
+                event.target instanceof Element &&
+                isInternalElement(event.target)
+            ) {
+                return;
+            }
+
+            scheduleMeasure();
+        };
+
+        const handleAnimationEnd = (event: Event) => {
+            if (
+                event.target instanceof Element &&
+                isInternalElement(event.target)
+            ) {
+                return;
+            }
+
+            scheduleMeasure();
+        };
 
         window.addEventListener("scroll", scheduleMeasure, {
             capture: true,
@@ -208,11 +264,37 @@ export const useElementScrollObserver = (
             passive: true,
         });
 
-        window.addEventListener("resize", scheduleMeasure);
+        window.addEventListener("resize", scheduleMeasure, {
+            passive: true,
+        });
 
-        window.visualViewport?.addEventListener("resize", scheduleMeasure);
+        targetElement.addEventListener(
+            "transitionend",
+            handleTransitionEnd,
+            true,
+        );
 
-        window.visualViewport?.addEventListener("scroll", scheduleMeasure);
+        targetElement.addEventListener(
+            "animationend",
+            handleAnimationEnd,
+            true,
+        );
+
+        window.visualViewport?.addEventListener("resize", scheduleMeasure, {
+            passive: true,
+        });
+
+        window.visualViewport?.addEventListener("scroll", scheduleMeasure, {
+            passive: true,
+        });
+
+        measure();
+
+        initialFrameId = requestAnimationFrame(() => {
+            measure();
+
+            secondInitialFrameId = requestAnimationFrame(measure);
+        });
 
         return () => {
             resizeObserver.disconnect();
@@ -223,6 +305,18 @@ export const useElementScrollObserver = (
             targetElement.removeEventListener("scroll", scheduleMeasure);
 
             window.removeEventListener("resize", scheduleMeasure);
+
+            targetElement.removeEventListener(
+                "transitionend",
+                handleTransitionEnd,
+                true,
+            );
+
+            targetElement.removeEventListener(
+                "animationend",
+                handleAnimationEnd,
+                true,
+            );
 
             window.visualViewport?.removeEventListener(
                 "resize",
@@ -236,10 +330,19 @@ export const useElementScrollObserver = (
 
             if (rafRef.current !== null) {
                 cancelAnimationFrame(rafRef.current);
+
                 rafRef.current = null;
             }
+
+            if (initialFrameId !== null) {
+                cancelAnimationFrame(initialFrameId);
+            }
+
+            if (secondInitialFrameId !== null) {
+                cancelAnimationFrame(secondInitialFrameId);
+            }
         };
-    }, [target, ready]);
+    }, [target]);
 
     return metrics;
 };

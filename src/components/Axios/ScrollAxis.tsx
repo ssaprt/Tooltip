@@ -1,5 +1,6 @@
 import type React from "react";
 import { useRef, useState } from "react";
+
 import { Axis, AxisMetrics } from "src/types/config/axis.type";
 import {
     PositionMode,
@@ -29,6 +30,7 @@ interface ScrollAxisProps {
     positionMode: PositionMode;
     superimposition: Superimposition;
     hasCrossAxis: boolean;
+
     vars: Record<string, string>;
 }
 
@@ -44,28 +46,21 @@ export const ScrollAxis = ({
     vars,
 }: ScrollAxisProps) => {
     const trackRef = useRef<HTMLDivElement>(null);
-    //* REFS ====================================================================
     const dragState = useRef<{
         startPointer: number;
         startScroll: number;
     } | null>(null);
-    //* REFS ====================================================================
-
-    //* STATE ===================================================================
     const [isDragging, setIsDragging] = useState(false);
-    //* STATE ===================================================================
-
-    //* COMPUTED PROPERTIES =====================================================
     const requestedTrackThickness =
         parsePxValue(scrollBar.widthTrack) ?? DEFAULT_TRACK_THICKNESS;
     const trackThickness = Math.max(1, requestedTrackThickness);
     const trackBoundary = parseBoundaryOffset(scrollBar.boundaryOffset);
     const thumbBoundary = parseBoundaryOffset(thumb.boundaryOffset);
-    const crossAxisCornerSize = hasCrossAxis
+    const reserveCrossAxisCorner = hasCrossAxis;
+    const crossAxisCornerSize = reserveCrossAxisCorner
         ? trackThickness +
           (positionMode === "before" ? trackBoundary.start : trackBoundary.end)
         : 0;
-
     const trackCenter = metrics.clientSize / 2;
     const requestedTrackLength = resolveTrackLength(
         scrollBar.heightTrack,
@@ -103,19 +98,18 @@ export const ScrollAxis = ({
     const thumbPosition = thumbMainStart + thumbPositionInsideTrack;
     const maxScroll = Math.max(0, metrics.scrollSize - metrics.clientSize);
     const maxThumbTravel = Math.max(0, innerTrackLength - thumbSize);
-    //* COMPUTED PROPERTIES =====================================================
 
-    //* METHODS =================================================================
     const setScrollPosition = (value: number) => {
         const targetElement = target;
 
-        if (!targetElement) return;
+        if (!targetElement) {
+            return;
+        }
 
-        const nextValue = clamp(value, 0, Math.max(0, maxScroll));
+        const nextValue = clamp(value, 0, maxScroll);
 
         if (!isPageScrollTarget(targetElement)) {
             if (axis === "x") {
-                //eslint-disable-next-line
                 targetElement.scrollLeft = nextValue;
             } else {
                 targetElement.scrollTop = nextValue;
@@ -125,15 +119,12 @@ export const ScrollAxis = ({
         }
 
         const targetStyle = window.getComputedStyle(targetElement);
-
         const overflowValue =
             axis === "x" ? targetStyle.overflowX : targetStyle.overflowY;
-
         const targetCanScroll =
             axis === "x"
                 ? targetElement.scrollWidth - targetElement.clientWidth > 1
                 : targetElement.scrollHeight - targetElement.clientHeight > 1;
-
         const targetOwnsScroll =
             targetCanScroll && /^(auto|scroll|overlay)$/.test(overflowValue);
 
@@ -175,22 +166,28 @@ export const ScrollAxis = ({
     ) => {
         const currentDragState = dragState.current;
 
-        if (!currentDragState) return;
-        if (maxScroll <= 0 || maxThumbTravel <= 0) return;
+        if (!currentDragState) {
+            return;
+        }
+
+        if (maxScroll <= 0 || maxThumbTravel <= 0) {
+            return;
+        }
 
         const pointerPosition = axis === "x" ? event.clientX : event.clientY;
-
         const pointerDelta = pointerPosition - currentDragState.startPointer;
-
         const scrollDelta = (pointerDelta / maxThumbTravel) * maxScroll;
 
         setScrollPosition(currentDragState.startScroll + scrollDelta);
     };
 
     const stopDrag = (event: React.PointerEvent<HTMLDivElement>) => {
-        if (!dragState.current) return;
+        if (!dragState.current) {
+            return;
+        }
 
         dragState.current = null;
+
         setIsDragging(false);
 
         try {
@@ -207,22 +204,23 @@ export const ScrollAxis = ({
 
         const trackElement = trackRef.current;
 
-        if (!trackElement) return;
-        if (maxThumbTravel <= 0) return;
+        if (!trackElement) {
+            return;
+        }
+
+        if (maxThumbTravel <= 0) {
+            return;
+        }
 
         const rect = trackElement.getBoundingClientRect();
-
         const clickPosition =
             axis === "x" ? event.clientX - rect.left : event.clientY - rect.top;
-
         const clickInsideInnerTrack = clickPosition - thumbMainStart;
-
         const targetThumbStart = clamp(
             clickInsideInnerTrack - thumbSize / 2,
             0,
             maxThumbTravel,
         );
-
         const nextScroll = trackPositionToScroll(
             targetThumbStart,
             innerTrackLength,
@@ -232,9 +230,7 @@ export const ScrollAxis = ({
 
         setScrollPosition(nextScroll);
     };
-    //* METHODS =================================================================
 
-    //* CHECKS ==================================================================
     if (
         !metrics.canScroll ||
         metrics.clientSize <= 0 ||
@@ -244,20 +240,15 @@ export const ScrollAxis = ({
     ) {
         return null;
     }
-    //* CHECKS ==================================================================
 
-    //* STYLES ==================================================================
     const trackStyle: React.CSSProperties =
         axis === "y"
             ? {
                   position: "absolute",
-
                   top: trackCenter,
                   transform: "translateY(-50%)",
-
                   width: trackThickness,
                   height: trackLength,
-
                   ...(positionMode === "before"
                       ? {
                             left: trackBoundary.start,
@@ -265,18 +256,14 @@ export const ScrollAxis = ({
                       : {
                             right: trackBoundary.end,
                         }),
-
                   pointerEvents: "auto",
               }
             : {
                   position: "absolute",
-
                   left: trackCenter,
                   transform: "translateX(-50%)",
-
                   width: trackLength,
                   height: trackThickness,
-
                   ...(positionMode === "before"
                       ? {
                             top: trackBoundary.start,
@@ -284,55 +271,35 @@ export const ScrollAxis = ({
                       : {
                             bottom: trackBoundary.end,
                         }),
-
                   pointerEvents: "auto",
               };
-
     const thumbStyle: React.CSSProperties =
         axis === "y"
             ? {
                   top: 0,
                   left: "50%",
-
                   width: thumbCrossSize,
                   height: thumbSize,
-
-                  transform: `
-                  translate3d(
-                      -50%,
-                      ${thumbPosition}px,
-                      0
-                  )
-              `,
-
+                  transform: `translate3d(-50%, ${thumbPosition}px, 0)`,
                   willChange: "transform",
               }
             : {
                   top: "50%",
                   left: 0,
-
                   width: thumbSize,
                   height: thumbCrossSize,
-
-                  transform: `
-                  translate3d(
-                      ${thumbPosition}px,
-                      -50%,
-                      0
-                  )
-              `,
-
+                  transform: `translate3d(${thumbPosition}px, -50%, 0)`,
                   willChange: "transform",
               };
-    //* STYLES ==================================================================
 
-    //* JSX =====================================================================
     return (
         <div
             ref={trackRef}
             className="scroll-to-future__track"
-            style={{ ...trackStyle, ...vars }}
-            //eslint-disable-next-line
+            style={{
+                ...trackStyle,
+                ...vars,
+            }}
             onPointerDown={handleTrackPointerDown}
             data-axis={axis}
             data-superimposition={superimposition}
@@ -343,12 +310,10 @@ export const ScrollAxis = ({
                 }`.trim()}
                 style={thumbStyle}
                 onPointerDown={handleThumbPointerDown}
-                //eslint-disable-next-line
                 onPointerMove={handleThumbPointerMove}
                 onPointerUp={stopDrag}
                 onPointerCancel={stopDrag}
             />
         </div>
     );
-    //* JSX =====================================================================
 };
