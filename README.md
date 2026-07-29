@@ -1,977 +1,1069 @@
-# Scroll To Future
-
-
-
-
-A customizable React scrollbar component with vertical and horizontal scrolling, draggable thumbs, automatic size calculation, mobile fallback, native scrollbar hiding, and built-in themes.
-
-Web version: <a href="https://utility-lub.vercel.app/react/UI-Components/scroll-to-future/">Scroll to Future</a>
-
-## Features
-
-* Vertical and horizontal scrollbars
-* Automatic thumb sizing
-* Drag-to-scroll support
-* Clickable scrollbar track
-* Support for regular elements and page scrolling
-* Automatic target detection
-* Automatic content and container observation
-* Native scrollbar hiding
-* Native scrolling fallback on mobile devices
-* Overlay and reserved-space positioning
-* Built-in theme presets
-* Fully customizable scrollbar and thumb styles
-* TypeScript support
-* React and Next.js compatible
-
-# 20+ Themes in box
-* "primary"
-* "midnight"
-* "neonCyan"
-* "ocean"
-* "deepSea"
-* "forest"
-* "moss"
-* "lava"
-* "ember"
-* "gold"
-* "roseQuartz"
-* "violet"
-* "royal"
-* "arctic"
-* "glass"
-* "graphite"
-* "terminal"
-* "toxic"
-* "candy"
-* "sand"
-* "monoLight"
-* "monoDark";
-
-## Installation
-
-```bash
-npm install scroll-to-future
-```
-
-```bash
-yarn add scroll-to-future
-```
-
-```bash
-pnpm add scroll-to-future
-```
-
-
-## Basic usage
-
-### Improt styles
-```bash
-import 'scroll-to-future/style.css';
-```
-
-
-The scroll container must have a constrained size and an `overflow` value such as `auto` or `scroll`.
-
-```tsx
-import { ScrollToFuture } from "scroll-to-future";
-
-export const Example = () => {
-    return (
-        <div
-            style={{
-                position: "relative",
-                width: "400px",
-                height: "300px",
-                overflow: "auto",
-            }}
-        >
-            <ScrollToFuture />
-
-            <div style={{ minHeight: "1000px" }}>
-                Scrollable content
-            </div>
-        </div>
-    );
-};
-```
-
-When `target` is not provided, `ScrollToFuture` automatically uses its parent element as the scroll target.
-
-For automatic target detection, place the component directly inside the scrollable container.
-
-## Usage with a target ref
-
-Use the `target` property when the scrollbar is rendered outside the scrollable element or when explicit target control is required.
-
-```tsx
-import { useRef } from "react";
-import { ScrollToFuture } from "scroll-to-future";
-
-export const Example = () => {
-    const scrollRef = useRef<HTMLDivElement>(null);
-
-    return (
-        <div style={{ position: "relative" }}>
-            <div
-                ref={scrollRef}
-                style={{
-                    width: "400px",
-                    height: "300px",
-                    overflow: "auto",
-                }}
-            >
-                <div style={{ minHeight: "1000px" }}>
-                    Scrollable content
-                </div>
-            </div>
-
-            <ScrollToFuture target={scrollRef} />
-        </div>
-    );
-};
-```
-
-## Vertical scrollbar
-
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        mode: "vertical",
-    }}
-/>
-```
-
-## Horizontal scrollbar
-
-```tsx
-<div
-    style={{
-        position: "relative",
-        width: "600px",
-        overflowX: "auto",
-        overflowY: "hidden",
-    }}
->
-    <ScrollToFuture
-        scrollBar={{
-            mode: "horizontal",
-        }}
-    />
-
-    <div style={{ width: "1600px", whiteSpace: "nowrap" }}>
-        Horizontally scrollable content
-    </div>
-</div>
-```
-
-## Vertical and horizontal scrollbars
-
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        mode: "both",
-    }}
-/>
-```
-
-## Configuration
-
-```tsx
-import type { ScrollToFutureConfig } from "scroll-to-future";
-import "scroll-to-future/styles.css";
-
-const config: ScrollToFutureConfig = {
-    scrollBar: {
-        mode: "both",
-        positionMode: "after",
-        superimposition: "after",
-        boundaryOffset: "4px",
-        widthTrack: "8px",
-        heightTrack: "98%",
-        hideNativeScrollbar: "always",
-    },
-
-    thumb: {
-        boundaryOffset: "1px 1px",
-        heightTrack: "auto",
-    },
-
-    nativeOnMobile: true,
-    selectTheme: "primary",
-    optionsTheme: {},
-};
-```
-
-```tsx
-<ScrollToFuture {...config} />
-```
-
-## Component properties
-
-| Property         | Type                                   |                  Default | Description                                       |
-| ---------------- | -------------------------------------- | -----------------------: | ------------------------------------------------- |
-| `target`         | `React.RefObject<HTMLElement \| null>` |           Parent element | Element whose scrolling is controlled             |
-| `scrollBar`      | `ScrollToFutureScrollBar`              | Default scrollbar config | Track and positioning configuration               |
-| `thumb`          | `ScrollToFutureThumb`                  |     Default thumb config | Thumb size and offset configuration               |
-| `selectTheme`    | `PresetsThemeType`                     |              `"primary"` | Built-in theme name                               |
-| `optionsTheme`   | `ScrollToFutureThemeProps`             |                     `{}` | Custom theme overrides                            |
-| `nativeOnMobile` | `boolean`                              |                   `true` | Use native scrolling on mobile-only input devices |
-
-## Scrollbar configuration
-
-### `mode`
-
-Controls which scrollbars are rendered.
-
-```ts
-type ScrollBarMode = "horizontal" | "vertical" | "both";
-```
-
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        mode: "vertical",
-    }}
-/>
-```
-
-Default:
-
-```ts
-"both"
-```
-
-### `positionMode`
-
-Controls the side on which the custom scrollbar is rendered.
-
-```ts
-type PositionMode = "before" | "after";
-```
-
-For a vertical scrollbar:
-
-* `"before"` places the track on the left.
-* `"after"` places the track on the right.
-
-For a horizontal scrollbar:
-
-* `"before"` places the track at the top.
-* `"after"` places the track at the bottom.
-
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        positionMode: "before",
-    }}
-/>
-```
-
-Default:
-
-```ts
-"after"
-```
-
-### `superimposition`
-
-Controls whether the scrollbar overlaps the content or reserves space for itself.
-
-```ts
-type Superimposition = "over" | "after";
-```
-
-#### Overlay mode
-
-The scrollbar is placed over the content.
-
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        superimposition: "over",
-    }}
-/>
-```
-
-#### Reserved-space mode
-
-The component adds padding to the target element so the scrollbar does not cover its content.
-
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        superimposition: "after",
-    }}
-/>
-```
-
-Default:
-
-```ts
-"after"
-```
-
-### `boundaryOffset`
-
-Sets the outer offset of the track.
-
-Accepted values:
-
-```ts
-type BoundaryOffset =
-    | `${number}px`
-    | `${number}px ${number}px`;
-```
-
-A single value applies the same offset to both sides:
-
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        boundaryOffset: "6px",
-    }}
-/>
-```
-
-Two values define the start and end offsets:
-
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        boundaryOffset: "4px 8px",
-    }}
-/>
-```
-
-Default:
-
-```ts
-"4px"
-```
-
-### `widthTrack`
-
-Sets the scrollbar track thickness.
-
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        widthTrack: "10px",
-    }}
-/>
-```
-
-Accepted value:
-
-```ts
-`${number}px`
-```
-
-The effective default thickness is `8px`.
-
-### `heightTrack`
-
-Sets the length of the scrollbar track.
-
-Accepted values:
-
-```ts
-type HeightTrackType =
-    | `${number}px`
-    | `${number}%`
-    | `${number}vh`
-    | `${number}dvh`
-    | `${number}dsvh`;
-```
-
-Examples:
-
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        heightTrack: "80%",
-    }}
-/>
-```
-
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        heightTrack: "240px",
-    }}
-/>
-```
-
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        heightTrack: "80dvh",
-    }}
-/>
-```
-
-Default:
-
-```ts
-"98%"
-```
-
-### `hideNativeScrollbar`
-
-Controls when the browser's native scrollbar is hidden.
-
-```ts
-type HideNativeScrollbarMode =
-    | false
-    | "fine-pointer"
-    | "always";
-```
-
-#### Do not hide the native scrollbar
-
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        hideNativeScrollbar: false,
-    }}
-/>
-```
-
-#### Hide only when a fine pointer is available
-
-This normally applies to devices with a mouse, trackpad, stylus, or another precise pointer.
-
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        hideNativeScrollbar: "fine-pointer",
-    }}
-/>
-```
-
-#### Always hide the native scrollbar
-
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        hideNativeScrollbar: "always",
-    }}
-/>
-```
-
-Default:
-
-```ts
-"always"
-```
-
-The native scrollbar is hidden only when the custom component covers every currently scrollable axis.
-
-For example, when the target can scroll both horizontally and vertically but `mode` is set to `"vertical"`, the native scrollbar is preserved because the horizontal axis is not covered by the custom scrollbar.
-
-## Thumb configuration
-
-### `boundaryOffset`
-
-Controls the space between the thumb and the track boundaries.
-
-```tsx
-<ScrollToFuture
-    thumb={{
-        boundaryOffset: "2px",
-    }}
-/>
-```
-
-```tsx
-<ScrollToFuture
-    thumb={{
-        boundaryOffset: "2px 4px",
-    }}
-/>
-```
-
-Default:
-
-```ts
-"1px 1px"
-```
-
-### `heightTrack`
-
-Controls the thumb size.
-
-```ts
-type ThumbHeight =
-    | "auto"
-    | `${number}px`
-    | `${number}%`;
-```
-
-#### Automatic size
-
-The thumb size is calculated from the ratio between the visible area and the full scrollable content.
-
-```tsx
-<ScrollToFuture
-    thumb={{
-        heightTrack: "auto",
-    }}
-/>
-```
-
-#### Fixed size
-
-```tsx
-<ScrollToFuture
-    thumb={{
-        heightTrack: "48px",
-    }}
-/>
-```
-
-#### Percentage size
-
-```tsx
-<ScrollToFuture
-    thumb={{
-        heightTrack: "20%",
-    }}
-/>
-```
-
-Default:
-
-```ts
-"auto"
-```
-
-The calculated thumb size is constrained to prevent it from becoming too small or occupying the entire track.
-
-## Mobile behavior
-
-By default, mobile-only input devices use the browser's native scrolling behavior.
-
-```tsx
-<ScrollToFuture nativeOnMobile />
-```
-
-This is equivalent to:
-
-```tsx
-<ScrollToFuture nativeOnMobile={true} />
-```
-
-On a device whose primary input is coarse and which has no fine pointer:
-
-* The custom scrollbar is not rendered.
-* The browser's native scrollbar is not hidden.
-* Native touch scrolling remains available.
-
-To force the custom scrollbar to render on mobile devices:
-
-```tsx
-<ScrollToFuture nativeOnMobile={false} />
-```
-
-## Built-in themes
-
-The package includes the following presets:
-
-```ts
-type PresetsThemeType =
-    | "primary"
-    | "midnight"
-    | "neonCyan"
-    | "ocean"
-    | "deepSea"
-    | "forest"
-    | "moss"
-    | "lava"
-    | "ember"
-    | "gold"
-    | "roseQuartz"
-    | "violet"
-    | "royal"
-    | "arctic"
-    | "glass"
-    | "graphite"
-    | "terminal"
-    | "toxic"
-    | "candy"
-    | "sand"
-    | "monoLight"
-    | "monoDark";
-```
-
-Select a theme with `selectTheme`:
-
-```tsx
-<ScrollToFuture selectTheme="neonCyan" />
-```
-
-```tsx
-<ScrollToFuture selectTheme="forest" />
-```
-
-```tsx
-<ScrollToFuture selectTheme="monoDark" />
-```
-
-## Custom theme
-
-Use `optionsTheme` to override part or all of the selected preset.
-
-```tsx
-<ScrollToFuture
-    selectTheme="primary"
-    optionsTheme={{
-        scrollBar: {
-            inactive: {
-                backgroundColor: "rgba(255, 255, 255, 0.08)",
-                borderRadius: "999px",
-            },
-
-            hover: {
-                backgroundColor: "rgba(255, 255, 255, 0.16)",
-            },
-
-            active: {
-                backgroundColor: "rgba(255, 255, 255, 0.24)",
-            },
-        },
-
-        thumb: {
-            inactive: {
-                backgroundColor: "#8b5cf6",
-                borderRadius: "999px",
-            },
-
-            hover: {
-                backgroundColor: "#a78bfa",
-                transform: "scale(1.05)",
-            },
-
-            active: {
-                backgroundColor: "#ddd6fe",
-                transform: "scale(1.12)",
-            },
-        },
-    }}
-/>
-```
-
-Custom theme values are deeply merged with the selected preset. You only need to provide the properties you want to replace.
-
-## Theme types
-
-```ts
-type ScrollToFutureThemeProps = {
-    scrollBar?: StatusElementsTheme;
-    thumb?: StatusElementsTheme;
-};
-
-type StatusElementsTheme = {
-    inactive?: ScrollToFutureGeneralTypes;
-    hover?: ScrollToFutureGeneralTypes;
-    active?: ScrollToFutureGeneralTypes;
-};
-
-type ScrollToFutureGeneralTypes = {
-    backgroundColor?: string;
-    opacity?: number;
-    border?: string;
-    borderRadius?: string;
-    outline?: string;
-    boxShadow?: string;
-    transition?: string;
-    transform?: string;
-};
-```
-
-## Complete customization example
-
-```tsx
-import { useRef } from "react";
-import { ScrollToFuture } from "scroll-to-future";
-
-export const CustomScrollbarExample = () => {
-    const targetRef = useRef<HTMLDivElement>(null);
-
-    return (
-        <div style={{ position: "relative" }}>
-            <div
-                ref={targetRef}
-                style={{
-                    width: "600px",
-                    height: "400px",
-                    overflow: "auto",
-                }}
-            >
-                <div
-                    style={{
-                        width: "1200px",
-                        minHeight: "1400px",
-                        padding: "24px",
-                    }}
-                >
-                    Scrollable content
-                </div>
-            </div>
-
-            <ScrollToFuture
-                target={targetRef}
-                nativeOnMobile={true}
-                selectTheme="violet"
-                scrollBar={{
-                    mode: "both",
-                    positionMode: "after",
-                    superimposition: "over",
-                    boundaryOffset: "6px",
-                    widthTrack: "10px",
-                    heightTrack: "90%",
-                    hideNativeScrollbar: "fine-pointer",
-                }}
-                thumb={{
-                    boundaryOffset: "2px",
-                    heightTrack: "auto",
-                }}
-                optionsTheme={{
-                    thumb: {
-                        active: {
-                            transform: "scale(1.15)",
-                            boxShadow: "0 0 16px rgba(139, 92, 246, 0.8)",
-                        },
-                    },
-                }}
-            />
-        </div>
-    );
-};
-```
-
-## Next.js
-
-The component uses browser APIs and must be rendered inside a Client Component.
-
-```tsx
+Tooltip by @ssaprt
+
+A flexible, themeable, and interactive tooltip library for React and Next.js.
+
+tooltip supports simple text hints, rich React content, interactive controls, media, custom themes, built-in animations, automatic viewport collision handling, touch interaction, and optional global presets through TooltipProvider.
+
+The provider is optional. Every Tooltip can work independently.
+
+Features
+
+Standalone tooltips without a provider
+
+Optional global TooltipProvider
+
+More than 50 built-in theme presets
+
+Per-tooltip theme overrides
+
+Fully custom themes
+
+Four preferred placements: top, bottom, left, and right
+
+Automatic opposite-side fallback
+
+Automatic viewport clamping
+
+Arrow position correction near rounded corners
+
+Unified tooltip body and arrow surface
+
+Solid colors, gradients, borders, textures, filters, and shadows
+
+Separate show and hide animations
+
+Configurable animation speed and easing
+
+Interactive tooltip content
+
+Configurable hide delay
+
+Text, JSX, components, forms, buttons, links, images, video, and other media
+
+Automatic repositioning while scrolling and resizing
+
+Automatic updates when tooltip content changes size
+
+Mouse, touch, focus, and keyboard handling
+
+React portal rendering into document.body
+
+TypeScript support
+
+React and Next.js support
+
+Adapted for modern Chrome, Safari, Firefox, Edge, iOS Safari, and Chromium-based mobile browsers
+
+Installation
+
+npm install @ssaprt/tooltip
+
+yarn add @ssaprt/tooltip
+
+pnpm add @ssaprt/tooltip
+
+Import the stylesheet once in the application entry point:
+
+import "@ssaprt/tooltip/style.css";
+
+Basic usage
+
+TooltipProvider is not required.
+
 "use client";
 
-import { ScrollToFuture } from "scroll-to-future";
+import { Tooltip } from "@ssaprt/tooltip";
+import "@ssaprt/tooltip/style.css";
 
-export const ScrollContainer = ({
+export const Example = () => {
+    return (
+        <Tooltip content="Copy value">
+            <button type="button">Copy</button>
+        </Tooltip>
+    );
+};
+
+The child element becomes the tooltip anchor.
+
+Local configuration
+
+Every tooltip can define its own position, theme, animation, delay, and behavior.
+
+<Tooltip
+    content="Saved successfully"
+    position="bottom"
+    selectTheme="dark"
+    animation={{
+        show: "bounce",
+        hide: "fade",
+        speed: "180ms",
+        easing: "ease-out",
+    }}
+    hideDelay={200}
+>
+    <button type="button">Save</button>
+</Tooltip>
+
+Tooltip inside an element
+
+A tooltip can also be placed directly inside its target element.
+
+<button type="button">
+    Delete
+
+    <Tooltip
+        content="Delete this item"
+        position="top"
+        selectTheme="red"
+    />
+</button>
+
+When children is not passed to Tooltip, the immediate parent element becomes the anchor.
+
+Optional global provider
+
+Use TooltipProvider when many tooltips should share the same initial position, preset theme, custom theme overrides, or animations.
+
+"use client";
+
+import { TooltipProvider } from "@ssaprt/tooltip";
+import "@ssaprt/tooltip/style.css";
+
+export const AppProvider = ({
     children,
 }: {
     children: React.ReactNode;
 }) => {
     return (
-        <div
-            style={{
-                position: "relative",
-                height: "100dvh",
-                overflow: "auto",
+        <TooltipProvider
+            defaultRenderPosition="top"
+            selectTheme="glass"
+            animation={{
+                show: "slide",
+                hide: "fade",
+                speed: "140ms",
+                easing: "ease-in-out",
             }}
         >
-            <ScrollToFuture />
-
             {children}
-        </div>
+        </TooltipProvider>
     );
 };
-```
 
-## How it works
+All descendant tooltips inherit these values unless they override them locally.
 
-The component observes the target element and its content using browser observers.
+<Tooltip content="Uses provider defaults">
+    <button type="button">Default tooltip</button>
+</Tooltip>
 
-It automatically recalculates:
-
-* Scrollable width and height
-* Current scroll position
-* Visible container size
-* Track dimensions
-* Thumb dimensions
-* Thumb position
-* Target element position
-* Horizontal and vertical overflow availability
-
-The scrollbar is updated when:
-
-* The target is scrolled
-* The window is resized
-* The visual viewport changes
-* The target changes size
-* Child elements change size
-* Elements are added or removed
-* Relevant styles or classes change
-
-## Interaction
-
-### Dragging the thumb
-
-Press and drag the thumb to change the target's scroll position.
-
-Pointer capture is used during dragging, so the interaction continues even when the pointer leaves the thumb.
-
-### Clicking the track
-
-Click an empty part of the track to move the thumb toward that position.
-
-The requested scroll position is automatically clamped to the available scroll range.
-
-## Page scrolling
-
-The component supports page scroll targets such as:
-
-* `document.body`
-* `document.documentElement`
-* `document.scrollingElement`
-
-When the target is part of the document scrolling system, the component resolves the active scroll container and uses the browser viewport for its measurements.
-
-## Important CSS requirements
-
-The target element should normally have:
-
-```css
-.scroll-container {
-    position: relative;
-    overflow: auto;
-    width: 100%;
-    height: 400px;
-}
-```
-
-A scrollbar cannot appear when the element has no constrained size or when its content does not exceed its visible area.
-
-For vertical scrolling:
-
-```css
-.scroll-container {
-    overflow-y: auto;
-}
-```
-
-For horizontal scrolling:
-
-```css
-.scroll-container {
-    overflow-x: auto;
-}
-```
-
-For both axes:
-
-```css
-.scroll-container {
-    overflow: auto;
-}
-```
-
-## Troubleshooting
-
-### The custom scrollbar is not visible
-
-Check that:
-
-1. The target has a constrained width or height.
-2. The content is larger than the target.
-3. The target uses `overflow: auto` or `overflow: scroll`.
-4. The selected `mode` includes the overflowing axis.
-5. The component is rendered in a Client Component.
-6. `nativeOnMobile` is not disabling the custom scrollbar on the current device.
-
-### The browser scrollbar is still visible
-
-Check the following:
-
-1. `hideNativeScrollbar` is not `false`.
-2. The custom component covers every scrollable axis.
-3. The correct element is passed through `target`.
-4. The actual scroll container is not a nested child of the supplied target.
-5. `nativeOnMobile` is not preserving native scrolling on the current device.
-6. `"fine-pointer"` is only active when the device has a fine pointer.
-
-To force native scrollbar hiding on desktop and mobile:
-
-```tsx
-<ScrollToFuture
-    nativeOnMobile={false}
-    scrollBar={{
-        hideNativeScrollbar: "always",
+<Tooltip
+    content="Uses local settings"
+    position="right"
+    selectTheme="comic"
+    animation={{
+        show: "zoom",
+        hide: "scale",
+        speed: "220ms",
     }}
-/>
-```
+>
+    <button type="button">Local tooltip</button>
+</Tooltip>
 
-### The content moves when the scrollbar appears
+Configuration priority
 
-The default `superimposition` value is `"after"`, which reserves space by adding padding to the target.
+Local tooltip values have priority over provider defaults.
 
-Use overlay mode when the scrollbar should not affect content spacing:
+The effective configuration is resolved in this order:
 
-```tsx
-<ScrollToFuture
-    scrollBar={{
-        superimposition: "over",
-    }}
-/>
-```
+Props passed directly to Tooltip
 
-### The scrollbar is rendered on the wrong element
+Local customTheme
 
-Pass an explicit ref:
+Values from TooltipProvider
 
-```tsx
-const targetRef = useRef<HTMLDivElement>(null);
+Animation settings from the selected preset theme
 
-<div ref={targetRef}>...</div>
+Built-in defaults
 
-<ScrollToFuture target={targetRef} />
-```
+The default built-in values are:
 
-## Browser requirements
+const defaults = {
+    position: "top",
+    selectTheme: "primary",
+    showAnimation: "slide",
+    hideAnimation: "fade",
+    animationSpeed: "120ms",
+    animationEasing: "ease-in-out",
+};
 
-The component relies on modern browser APIs:
+Text content
 
-* `ResizeObserver`
-* `MutationObserver`
-* Pointer Events
-* `requestAnimationFrame`
-* `matchMedia`
-* CSS custom properties
+<Tooltip content="Simple text tooltip">
+    <span>Hover me</span>
+</Tooltip>
 
-For older browsers, additional polyfills may be required.
+The content prop accepts any valid ReactNode.
 
-## TypeScript
+React content
 
-The package exports the component and its public configuration type:
+<Tooltip
+    content={
+        <div>
+            <strong>Build completed</strong>
+            <span>All files were generated successfully.</span>
+        </div>
+    }
+>
+    <button type="button">Build status</button>
+</Tooltip>
 
-```ts
-export { ScrollToFuture } from "scroll-to-future";
+Interactive content
 
-export type {
-    ScrollToFutureConfig,
-} from "scroll-to-future";
-```
+Set interactive when the user must be able to move the pointer into the tooltip and interact with its content.
+
+<Tooltip
+    interactive
+    hideDelay={300}
+    content={
+        <div>
+            <button type="button">Previous</button>
+            <input type="text" placeholder="Search" />
+            <button type="button">Next</button>
+        </div>
+    }
+>
+    <button type="button">Open controls</button>
+</Tooltip>
+
+With interactive enabled:
+
+The tooltip remains visible while the pointer is inside it
+
+Buttons, links, inputs, selects, and other controls remain usable
+
+Moving from the anchor to the tooltip does not close it
+
+Moving away from both the anchor and tooltip starts the hide delay
+
+Clicking outside closes the tooltip
+
+Pressing Escape closes the tooltip
+
+Focus can move between the anchor and tooltip content
+
+The default hide delay is:
+
+120
+
+For interactive tooltips, the default is:
+
+240
+
+A custom hideDelay overrides both values.
+
+Rich components and media
+
+Tooltip content is not limited to a short string. It can contain complete React interfaces, including cards, media previews, forms, navigation, images, audio, and video.
+
+<Tooltip
+    interactive
+    position="right"
+    selectTheme="glass"
+    content={
+        <article
+            style={{
+                display: "grid",
+                width: "320px",
+                gap: "12px",
+                textAlign: "left",
+            }}
+        >
+            <video
+                controls
+                poster="/media/preview.jpg"
+                style={{
+                    display: "block",
+                    width: "100%",
+                    borderRadius: "12px",
+                }}
+            >
+                <source
+                    src="/media/preview.mp4"
+                    type="video/mp4"
+                />
+            </video>
+
+            <div>
+                <strong>Media preview</strong>
+                <p>Interactive content remains available inside the tooltip.</p>
+            </div>
+
+            <div
+                style={{
+                    display: "flex",
+                    gap: "8px",
+                }}
+            >
+                <button type="button">Open</button>
+                <button type="button">Save</button>
+            </div>
+        </article>
+    }
+>
+    <button type="button">Show preview</button>
+</Tooltip>
+
+The tooltip uses ResizeObserver, so its position is recalculated when dynamic content changes size.
+
+Trigger elements
+
+Wrapping a DOM element
+
+<Tooltip content="Open settings">
+    <button type="button">Settings</button>
+</Tooltip>
+
+Wrapping a custom React component
+
+The wrapped component must forward its ref to a DOM element.
+
+import { forwardRef } from "react";
+
+const ActionButton = forwardRef<
+    HTMLButtonElement,
+    React.ComponentProps<"button">
+>((props, ref) => {
+    return <button ref={ref} {...props} />;
+});
+
+ActionButton.displayName = "ActionButton";
+
+export const Example = () => {
+    return (
+        <Tooltip content="Custom component tooltip">
+            <ActionButton type="button">Action</ActionButton>
+        </Tooltip>
+    );
+};
+
+Using a tooltip inside a custom component
+
+When forwarding a ref is not convenient, place Tooltip inside the final DOM element.
+
+export const ActionButton = () => {
+    return (
+        <button type="button">
+            Action
+            <Tooltip content="Custom component tooltip" />
+        </button>
+    );
+};
+
+Placement
+
+Available placements:
+
+type TooltipPlacement =
+    | "top"
+    | "bottom"
+    | "left"
+    | "right";
 
 Example:
 
-```tsx
-import type { ScrollToFutureConfig } from "scroll-to-future";
+<Tooltip content="Rendered on the left" position="left">
+    <button type="button">Left</button>
+</Tooltip>
 
-const scrollbarConfig: ScrollToFutureConfig = {
-    selectTheme: "graphite",
+The requested placement is preferred, not forced.
 
-    scrollBar: {
-        mode: "vertical",
-        positionMode: "after",
-        superimposition: "over",
-        hideNativeScrollbar: "always",
-    },
+When there is not enough space, the tooltip checks the opposite side:
 
-    thumb: {
-        heightTrack: "auto",
-    },
+top can fall back to bottom
+
+bottom can fall back to top
+
+left can fall back to right
+
+right can fall back to left
+
+The final position is clamped to the viewport so the tooltip does not render outside the visible area.
+
+The arrow is repositioned automatically and constrained to the straight section of the edge so it does not overlap rounded corners.
+
+Built-in themes
+
+The package includes more than 50 ready-to-use presets with different visual styles, including clean, dark, comic, terminal, glass, neon, retro, cyberpunk, paper, metallic, natural, warning, and decorative themes.
+
+Examples include:
+
+"primary"
+"secondary"
+"dark"
+"light"
+"comic"
+"manga"
+"newspaper"
+"stickyNote"
+"blueprint"
+"terminal"
+"crt"
+"pixel"
+"arcade"
+"cyberpunk"
+"synthwave"
+"vaporwave"
+"hologram"
+"glass"
+"frost"
+"clay"
+"bubblegum"
+"candy"
+"watermelon"
+"lemon"
+"lava"
+"ember"
+"toxic"
+"radioactive"
+"hazard"
+"policeTape"
+"construction"
+"parchment"
+"pirateMap"
+"royal"
+"noir"
+"detective"
+"dossier"
+"medical"
+"laboratory"
+"circuit"
+"galaxy"
+"aurora"
+"oceanDepths"
+"coralReef"
+"forest"
+"moss"
+"desert"
+"snow"
+"chrome"
+"goldFoil"
+"bronze"
+"brutalist"
+"chalkboard"
+
+Select a preset globally:
+
+<TooltipProvider selectTheme="cyberpunk">
+    <App />
+</TooltipProvider>
+
+Or locally:
+
+<Tooltip content="Local theme" selectTheme="terminal">
+    <button type="button">Terminal</button>
+</Tooltip>
+
+PresetsThemeType is derived from the actual preset map, so TypeScript only accepts available theme names.
+
+Custom themes
+
+A custom theme can be applied globally through TooltipProvider or locally through Tooltip.
+
+<Tooltip
+    content="Custom theme"
+    customTheme={{
+        body: {
+            background:
+                "linear-gradient(135deg, #7c3aed, #db2777)",
+            filter:
+                "drop-shadow(0 12px 24px rgba(124, 58, 237, 0.4))",
+            style: {
+                color: "#ffffff",
+                padding: "12px 16px",
+                border: "2px solid #f0abfc",
+                borderRadius: "18px 6px",
+                fontSize: "14px",
+                fontWeight: 700,
+            },
+        },
+        arrow: {
+            size: "10px",
+            width: "24px",
+        },
+        animation: {
+            show: "bounce",
+            hide: "scale",
+            speed: "220ms",
+            easing: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+        },
+    }}
+>
+    <button type="button">Custom</button>
+</Tooltip>
+
+Custom theme values are merged with the selected preset. Only the values that must change need to be supplied.
+
+Theme type
+
+import type { CSSProperties } from "react";
+
+type TooltipSize =
+    | `${number}px`
+    | `${number}rem`
+    | `${number}em`
+    | `calc(${string})`;
+
+type ThemeType = {
+    body?: {
+        background?: CSSProperties["background"];
+        filter?: CSSProperties["filter"];
+        style?: CSSProperties;
+        className?: string;
+    };
+    arrow?: {
+        size?: TooltipSize;
+        width?: TooltipSize;
+    };
+    animation?: TooltipAnimationOptions;
 };
-```
+
+body.background
+
+Controls the complete tooltip surface background, including the arrow.
+
+Supported values include:
+
+Solid colors
+
+Linear gradients
+
+Radial gradients
+
+Conic gradients
+
+Repeating gradients
+
+CSS variables
+
+Other valid CSS background values
+
+<Tooltip
+    content="Gradient"
+    customTheme={{
+        body: {
+            background:
+                "linear-gradient(135deg, #22d3ee, #7c3aed)",
+        },
+    }}
+>
+    <button type="button">Gradient</button>
+</Tooltip>
+
+body.style
+
+Accepts regular React CSSProperties for the tooltip content and surface configuration.
+
+Common options include:
+
+{
+    color: "#ffffff",
+    padding: "10px 14px",
+    border: "2px solid #ffffff",
+    borderRadius: "14px",
+    fontSize: "13px",
+    fontWeight: 600,
+    lineHeight: 1.4,
+    textAlign: "left",
+    maxWidth: "320px",
+}
+
+Borders and corner radii are used to generate the unified body-and-arrow surface.
+
+body.filter
+
+Applies a filter to the complete tooltip surface, including the arrow.
+
+<Tooltip
+    content="Shadow"
+    customTheme={{
+        body: {
+            filter:
+                "drop-shadow(0 12px 18px rgba(0, 0, 0, 0.35))",
+        },
+    }}
+>
+    <button type="button">Shadow</button>
+</Tooltip>
+
+body.className
+
+Adds a class name to the tooltip content container.
+
+<Tooltip
+    content="Class name"
+    customTheme={{
+        body: {
+            className: "my-tooltip-content",
+        },
+    }}
+>
+    <button type="button">Styled</button>
+</Tooltip>
+
+arrow.size
+
+Controls how far the arrow extends from the tooltip body.
+
+arrow: {
+    size: "10px",
+}
+
+arrow.width
+
+Controls the width of the arrow base.
+
+arrow: {
+    width: "24px",
+}
+
+Animations
+
+Show and hide animations can be configured independently.
+
+<Tooltip
+    content="Animated tooltip"
+    animation={{
+        show: "flip",
+        hide: "blur",
+        speed: "200ms",
+        easing: "ease-out",
+    }}
+>
+    <button type="button">Animate</button>
+</Tooltip>
+
+Available animation types:
+
+type TooltipAnimationType =
+    | "fade"
+    | "slide"
+    | "scale"
+    | "zoom"
+    | "blur"
+    | "flip"
+    | "bounce"
+    | "none";
+
+Animation options:
+
+type TooltipAnimationSpeed =
+    | `${number}ms`
+    | `${number}s`;
+
+type TooltipAnimationOptions = {
+    show?: TooltipAnimationType;
+    hide?: TooltipAnimationType;
+    speed?: TooltipAnimationSpeed;
+    easing?: CSSProperties["animationTimingFunction"];
+};
+
+Disable animations:
+
+<Tooltip
+    content="No animation"
+    animation={{
+        show: "none",
+        hide: "none",
+        speed: "1ms",
+        easing: "linear",
+    }}
+>
+    <button type="button">Static</button>
+</Tooltip>
+
+The stylesheet also respects prefers-reduced-motion and reduces animation duration when the user requests reduced motion.
+
+TooltipProvider API
+
+TooltipProvider is optional and only supplies global defaults to descendant tooltips.
+
+Property
+
+Type
+
+Default
+
+Description
+
+children
+
+ReactNode
+
+Required
+
+Components that can consume the provider defaults
+
+defaultRenderPosition
+
+"top" | "bottom" | "left" | "right"
+
+"top"
+
+Default preferred placement
+
+selectTheme
+
+PresetsThemeType
+
+"primary"
+
+Default built-in theme preset
+
+customTheme
+
+ThemeType
+
+undefined
+
+Global theme overrides merged with the selected preset
+
+animation
+
+TooltipAnimationOptions
+
+Theme settings
+
+Global show and hide animation overrides
+
+Complete provider example:
+
+<TooltipProvider
+    defaultRenderPosition="bottom"
+    selectTheme="glass"
+    customTheme={{
+        body: {
+            style: {
+                color: "#ffffff",
+                padding: "10px 14px",
+                borderRadius: "14px",
+                maxWidth: "360px",
+            },
+        },
+        arrow: {
+            size: "8px",
+            width: "18px",
+        },
+    }}
+    animation={{
+        show: "blur",
+        hide: "fade",
+        speed: "180ms",
+        easing: "ease-in-out",
+    }}
+>
+    <App />
+</TooltipProvider>
+
+Tooltip API
+
+Property
+
+Type
+
+Default
+
+Description
+
+content
+
+ReactNode
+
+Required
+
+Text, JSX, components, controls, media, or any other React content
+
+children
+
+ReactElement
+
+Optional
+
+Element used as the tooltip anchor; without it, the immediate parent is used
+
+position
+
+TooltipPlacement
+
+Provider value or "top"
+
+Preferred tooltip placement
+
+selectTheme
+
+PresetsThemeType
+
+Provider value or "primary"
+
+Local built-in theme preset
+
+customTheme
+
+ThemeType
+
+undefined
+
+Local theme overrides
+
+animation
+
+TooltipAnimationOptions
+
+Provider or theme settings
+
+Local show and hide animation settings
+
+disabled
+
+boolean
+
+false
+
+Prevents the tooltip from opening
+
+interactive
+
+boolean
+
+false
+
+Enables pointer and focus interaction inside the tooltip
+
+hideDelay
+
+number
+
+120, or 240 when interactive
+
+Delay in milliseconds before the tooltip begins hiding
+
+Complete tooltip example:
+
+<Tooltip
+    content={
+        <div>
+            <strong>Account</strong>
+            <button type="button">Open profile</button>
+        </div>
+    }
+    position="right"
+    selectTheme="terminal"
+    customTheme={{
+        body: {
+            style: {
+                minWidth: "220px",
+                textAlign: "left",
+            },
+        },
+    }}
+    animation={{
+        show: "zoom",
+        hide: "fade",
+        speed: "160ms",
+    }}
+    interactive
+    hideDelay={300}
+>
+    <button type="button">Account</button>
+</Tooltip>
+
+Public interfaces
+
+import type { ReactElement, ReactNode } from "react";
+
+export type TooltipPlacement =
+    | "top"
+    | "bottom"
+    | "left"
+    | "right";
+
+export interface TooltipProviderInterface {
+    defaultRenderPosition?: TooltipPlacement;
+    selectTheme?: PresetsThemeType;
+    customTheme?: ThemeType;
+    animation?: TooltipAnimationOptions;
+}
+
+export interface TooltipInterface {
+    content: ReactNode;
+    children?: ReactElement;
+    position?: TooltipPlacement;
+    selectTheme?: PresetsThemeType;
+    customTheme?: ThemeType;
+    animation?: TooltipAnimationOptions;
+    disabled?: boolean;
+    interactive?: boolean;
+    hideDelay?: number;
+}
+
+TypeScript exports
+
+import {
+    Tooltip,
+    TooltipProvider,
+} from "@ssaprt/tooltip";
+
+import type {
+    PresetsThemeType,
+    ThemeType,
+    TooltipAnimationOptions,
+    TooltipAnimationSpeed,
+    TooltipAnimationType,
+    TooltipInterface,
+    TooltipPlacement,
+    TooltipProviderInterface,
+    TooltipSize,
+} from "@ssaprt/tooltip";
+
+Browser support
+
+The package is designed for consistent behavior in modern desktop and mobile browsers:
+
+Google Chrome
+
+Apple Safari
+
+Mozilla Firefox
+
+Microsoft Edge
+
+iOS Safari
+
+Chromium-based Android browsers
+
+The implementation uses browser-standard APIs and technologies:
+
+React portals
+
+Pointer events
+
+Touch input
+
+Focus events
+
+ResizeObserver
+
+requestAnimationFrame
+
+SVG paths and masks
+
+CSS custom properties
+
+CSS gradients
+
+CSS filters
+
+Fixed viewport positioning
+
+Tooltips are rendered into document.body, so they are not normally clipped by overflow: hidden or overflow: auto on application containers.
+
+The position is recalculated when:
+
+The window is resized
+
+The page or an ancestor is scrolled
+
+Tooltip content changes dimensions
+
+Media or dynamic components change the tooltip size
+
+Legacy Internet Explorer is not supported.
+
+Mouse, keyboard, and touch behavior
+
+Desktop pointer behavior:
+
+Pointer enter opens the tooltip
+
+Pointer leave starts the configured hide delay
+
+Interactive content keeps the tooltip open while hovered
+
+Keyboard behavior:
+
+Focusing the anchor opens the tooltip
+
+Focus can move into interactive content
+
+Escape closes the tooltip
+
+Touch behavior:
+
+Tapping the anchor toggles the tooltip
+
+Tapping outside closes it
+
+React and Next.js
+
+Tooltip and TooltipProvider use client-side browser APIs and React portals. In Next.js, render them from a Client Component.
+
+"use client";
+
+import { Tooltip, TooltipProvider } from "@ssaprt/tooltip";
+import "@ssaprt/tooltip/style.css";
+
+export const TooltipClientProvider = ({
+    children,
+}: {
+    children: React.ReactNode;
+}) => {
+    return (
+        <TooltipProvider
+            defaultRenderPosition="top"
+            selectTheme="primary"
+        >
+            {children}
+        </TooltipProvider>
+    );
+};
+
+Use it in a layout:
+
+import { TooltipClientProvider } from "./TooltipClientProvider";
+
+export default function RootLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <html lang="en">
+            <body>
+                <TooltipClientProvider>
+                    {children}
+                </TooltipClientProvider>
+            </body>
+        </html>
+    );
+}
+
+A provider is still optional. A standalone tooltip can be rendered directly from any Client Component.
+
+Rendering and overflow
+
+The visible tooltip is rendered through a React portal into document.body.
+
+This provides several benefits:
+
+Parent overflow normally does not clip the tooltip
+
+The tooltip is positioned relative to the viewport
+
+Scroll and resize updates are handled globally
+
+Complex content is isolated from the anchor layout
+
+A high stacking level can be used without depending on the anchor's stacking context
+
+License
+
+MIT

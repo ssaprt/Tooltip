@@ -1,7 +1,7 @@
 {
-    "name": "scroll-to-future",
-    "version": "1.0.14",
-    "description": "",
+    "name": "@ssaprt/tooltip",
+    "version": "1.0.0",
+    "description": "A customizable React tooltip library with rich content, interactive tooltips, animations, SVG surfaces, and built-in themes.",
     "main": "dist/index.js",
     "module": "dist/index.mjs",
     "types": "dist/index.d.ts",
@@ -28,14 +28,9 @@
         "push": "npm run build && npx yalc push"
     },
     "keywords": [
-        "scrollbar",
-        "scroll",
+        "tooltip",
         "react",
-        "next",
-        "scroller",
-        "custom-scrollbar",
-        "custom-scroll",
-        "x-y-scroll"
+        "next"
     ],
     "author": "ssaprt (Denis Ukhan)",
     "license": "MIT",
