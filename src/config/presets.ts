@@ -205,21 +205,19 @@ export const presets = {
     }),
 
     manga: createTheme({
-        background:
-            "radial-gradient(circle at 2px 2px, rgba(0, 0, 0, 0.2) 1px, transparent 1.5px) 0 0 / 6px 6px, #ffffff",
+        background: "linear-gradient(145deg, #ffffff, #f4f4f5)",
         color: "#000000",
         fontFamily: "Impact, Haettenschweiler, Arial Narrow Bold, sans-serif",
         fontSize: "13px",
         fontWeight: 900,
         border: "3px solid #000000",
-        borderRadius: "18px 5px 18px 5px",
-        filter: "drop-shadow(4px 4px 0 #000000)",
+        borderRadius: "10px 3px 10px 3px",
         padding: "9px 15px",
         letterSpacing: "0.04em",
         textTransform: "uppercase",
-        arrowSize: "11px",
+        arrowSize: "10px",
         arrowWidth: "17px",
-        animation: animations.snap,
+        animation: animations.pop,
     }),
 
     newspaper: createTheme({
@@ -282,58 +280,50 @@ export const presets = {
     }),
 
     terminal: createTheme({
-        background: "linear-gradient(180deg, #020617, #000000)",
-        color: "#22c55e",
+        background: "#020a04",
+        color: "#4ade80",
         fontFamily: "Consolas, Monaco, Courier New, monospace",
         fontSize: "12px",
         fontWeight: 600,
         border: "1px solid #22c55e",
         borderRadius: "3px",
-        filter: "drop-shadow(0 0 5px rgba(34, 197, 94, 0.65))",
         padding: "8px 12px",
         letterSpacing: "0.035em",
-        textShadow: "0 0 5px rgba(34, 197, 94, 0.9)",
         textAlign: "left",
         arrowSize: "7px",
         arrowWidth: "13px",
-        animation: animations.instant,
+        animation: animations.soft,
     }),
 
     crt: createTheme({
-        background:
-            "repeating-linear-gradient(0deg, rgba(34, 197, 94, 0.08) 0, rgba(34, 197, 94, 0.08) 1px, transparent 1px, transparent 3px), radial-gradient(circle at center, #07150b, #000000)",
+        background: "linear-gradient(180deg, #07150b, #020804)",
         color: "#86efac",
         fontFamily: "Lucida Console, Monaco, monospace",
         fontSize: "12px",
         fontWeight: 600,
         border: "2px solid #166534",
-        borderRadius: "18px",
-        filter: "drop-shadow(0 0 8px rgba(34, 197, 94, 0.5)) drop-shadow(0 0 18px rgba(34, 197, 94, 0.18))",
+        borderRadius: "12px",
         padding: "10px 15px",
-        textShadow: "0 0 6px rgba(134, 239, 172, 0.85)",
         arrowSize: "8px",
         arrowWidth: "18px",
-        animation: animations.blur,
+        animation: animations.soft,
     }),
 
     pixel: createTheme({
-        background:
-            "linear-gradient(135deg, #4c1d95 25%, #581c87 25%, #581c87 50%, #4c1d95 50%, #4c1d95 75%, #581c87 75%) 0 0 / 8px 8px",
+        background: "linear-gradient(135deg, #4c1d95, #581c87)",
         color: "#fef08a",
-        fontFamily: "Press Start 2P, Courier New, monospace",
+        fontFamily: "Courier New, monospace",
         fontSize: "10px",
         fontWeight: 700,
         lineHeight: 1.7,
         border: "4px solid #fef08a",
         borderRadius: "0px",
-        filter: "drop-shadow(6px 6px 0 #18181b)",
         padding: "10px 14px",
         letterSpacing: "0.03em",
-        textShadow: "2px 2px 0 #18181b",
         textTransform: "uppercase",
         arrowSize: "10px",
         arrowWidth: "18px",
-        animation: animations.snap,
+        animation: animations.pop,
     }),
 
     arcade: createTheme({
@@ -575,21 +565,19 @@ export const presets = {
     }),
 
     toxic: createTheme({
-        background:
-            "repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.17) 0, rgba(0, 0, 0, 0.17) 5px, transparent 5px, transparent 10px), #a3e635",
+        background: "linear-gradient(135deg, #bef264, #84cc16)",
         color: "#1a2e05",
         fontFamily: "Arial Black, Impact, sans-serif",
         fontSize: "12px",
         fontWeight: 900,
         border: "3px solid #1a2e05",
-        borderRadius: "2px 12px 2px 12px",
-        filter: "drop-shadow(4px 5px 0 #365314)",
+        borderRadius: "3px 10px 3px 10px",
         padding: "9px 14px",
         letterSpacing: "0.08em",
         textTransform: "uppercase",
         arrowSize: "10px",
         arrowWidth: "20px",
-        animation: animations.snap,
+        animation: animations.pop,
     }),
 
     radioactive: createTheme({
@@ -612,21 +600,18 @@ export const presets = {
     }),
 
     hazard: createTheme({
-        background:
-            "repeating-linear-gradient(135deg, #f97316 0, #f97316 10px, #18181b 10px, #18181b 20px)",
+        background: "linear-gradient(135deg, #fb923c, #ea580c)",
         color: "#ffffff",
         fontFamily: "Arial Black, Impact, sans-serif",
         fontSize: "12px",
         fontWeight: 900,
         border: "3px solid #18181b",
         borderRadius: "4px",
-        filter: "drop-shadow(5px 5px 0 rgba(24, 24, 27, 0.6))",
         padding: "9px 15px",
-        textShadow: "2px 2px 0 #18181b, -1px -1px 0 #18181b",
         textTransform: "uppercase",
         arrowSize: "10px",
         arrowWidth: "20px",
-        animation: animations.snap,
+        animation: animations.pop,
     }),
 
     policeTape: createTheme({
@@ -759,22 +744,20 @@ export const presets = {
     }),
 
     dossier: createTheme({
-        background:
-            "linear-gradient(90deg, rgba(127, 29, 29, 0.15) 0 4px, transparent 4px), repeating-linear-gradient(0deg, transparent 0 14px, rgba(120, 83, 36, 0.13) 14px 15px), #e7d7b5",
+        background: "linear-gradient(180deg, #f2e5c8, #dfc99f)",
         color: "#3f2d1d",
         fontFamily: "Courier New, monospace",
         fontSize: "11px",
         fontWeight: 800,
         border: "2px solid #92400e",
-        borderRadius: "1px 8px 1px 8px",
-        filter: "drop-shadow(5px 7px 0 rgba(120, 53, 15, 0.35))",
+        borderRadius: "2px 7px 2px 7px",
         padding: "11px 16px",
         letterSpacing: "0.08em",
         textTransform: "uppercase",
         textAlign: "left",
         arrowSize: "8px",
         arrowWidth: "17px",
-        animation: animations.snap,
+        animation: animations.soft,
     }),
 
     medical: createTheme({
@@ -815,21 +798,18 @@ export const presets = {
     }),
 
     circuit: createTheme({
-        background:
-            "linear-gradient(90deg, transparent 48%, rgba(34, 197, 94, 0.2) 48% 52%, transparent 52%) 0 0 / 18px 18px, linear-gradient(0deg, transparent 48%, rgba(34, 197, 94, 0.2) 48% 52%, transparent 52%) 0 0 / 18px 18px, radial-gradient(circle at 9px 9px, #22c55e 0 1.5px, transparent 2px) 0 0 / 18px 18px, #052e16",
+        background: "linear-gradient(135deg, #052e16, #022c22)",
         color: "#bbf7d0",
         fontFamily: "Consolas, monospace",
         fontSize: "11px",
         fontWeight: 700,
         border: "2px solid #22c55e",
         borderRadius: "5px",
-        filter: "drop-shadow(0 0 7px rgba(34, 197, 94, 0.55))",
         padding: "9px 14px",
         letterSpacing: "0.05em",
-        textShadow: "0 0 4px rgba(34, 197, 94, 0.75)",
         arrowSize: "8px",
         arrowWidth: "16px",
-        animation: animations.snap,
+        animation: animations.soft,
     }),
 
     galaxy: createTheme({
@@ -1028,29 +1008,25 @@ export const presets = {
         fontWeight: 900,
         border: "4px solid #000000",
         borderRadius: "0px",
-        filter: "drop-shadow(7px 7px 0 #ef4444)",
         padding: "10px 16px",
         letterSpacing: "-0.03em",
         textTransform: "uppercase",
         textAlign: "left",
         arrowSize: "11px",
         arrowWidth: "19px",
-        animation: animations.snap,
+        animation: animations.pop,
     }),
 
     chalkboard: createTheme({
-        background:
-            "repeating-linear-gradient(175deg, rgba(255, 255, 255, 0.018) 0, rgba(255, 255, 255, 0.018) 2px, transparent 2px, transparent 7px), #163a2c",
+        background: "linear-gradient(145deg, #183f30, #102a21)",
         color: "#f5f5dc",
         fontFamily: "Comic Sans MS, Chalkboard, cursive",
         fontSize: "13px",
         fontWeight: 600,
         border: "3px solid #8b5e3c",
         borderRadius: "2px",
-        filter: "drop-shadow(4px 6px 0 rgba(66, 32, 6, 0.45))",
         padding: "10px 16px",
         letterSpacing: "0.025em",
-        textShadow: "0 0 2px rgba(255, 255, 255, 0.55)",
         textAlign: "left",
         arrowSize: "9px",
         arrowWidth: "18px",
