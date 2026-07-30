@@ -1,77 +1,64 @@
-Tooltip by @ssaprt
+# Tooltip by @ssaprt
 
 A flexible, themeable, and interactive tooltip library for React and Next.js.
 
-Web version: <a href="https://utility-lub.vercel.app/react/UI-Components/tooltip/">Scroll to Future</a>
+[Web version](https://utility-lub.vercel.app/react/UI-Components/tooltip/)
 
-tooltip supports simple text hints, rich React content, interactive controls, media, custom themes, built-in animations, automatic viewport collision handling, touch interaction, and optional global presets through TooltipProvider.
+`@ssaprt/tooltip` supports simple text hints, rich React content, interactive controls, media, custom themes, built-in animations, automatic viewport collision handling, touch interaction, and optional global presets through `TooltipProvider`.
 
-The provider is optional. Every Tooltip can work independently.
+The provider is optional. Every `Tooltip` can work independently.
 
-Features
+## Features
 
-Standalone tooltips without a provider
+- Standalone tooltips without a provider
+- Optional global `TooltipProvider`
+- More than 50 built-in theme presets
+- Per-tooltip theme overrides
+- Fully custom themes
+- Four preferred placements: `top`, `bottom`, `left`, and `right`
+- Automatic opposite-side fallback
+- Automatic viewport clamping
+- Arrow position correction near rounded corners
+- Unified tooltip body and arrow surface
+- Solid colors, gradients, borders, textures, filters, and shadows
+- Separate show and hide animations
+- Configurable animation speed and easing
+- Interactive tooltip content
+- Configurable hide delay
+- Text, JSX, components, forms, buttons, links, images, video, and other media
+- Automatic repositioning while scrolling and resizing
+- Automatic updates when tooltip content changes size
+- Mouse, touch, focus, and keyboard handling
+- React portal rendering into `document.body`
+- TypeScript support
+- React and Next.js support
+- Adapted for modern Chrome, Safari, Firefox, Edge, iOS Safari, and Chromium-based mobile browsers
 
-Optional global TooltipProvider
+## Installation
 
-More than 50 built-in theme presets
-
-Per-tooltip theme overrides
-
-Fully custom themes
-
-Four preferred placements: top, bottom, left, and right
-
-Automatic opposite-side fallback
-
-Automatic viewport clamping
-
-Arrow position correction near rounded corners
-
-Unified tooltip body and arrow surface
-
-Solid colors, gradients, borders, textures, filters, and shadows
-
-Separate show and hide animations
-
-Configurable animation speed and easing
-
-Interactive tooltip content
-
-Configurable hide delay
-
-Text, JSX, components, forms, buttons, links, images, video, and other media
-
-Automatic repositioning while scrolling and resizing
-
-Automatic updates when tooltip content changes size
-
-Mouse, touch, focus, and keyboard handling
-
-React portal rendering into document.body
-
-TypeScript support
-
-React and Next.js support
-
-Adapted for modern Chrome, Safari, Firefox, Edge, iOS Safari, and Chromium-based mobile browsers
-
-Installation
-
+```bash
 npm install @ssaprt/tooltip
+```
 
+```bash
 yarn add @ssaprt/tooltip
+```
 
+```bash
 pnpm add @ssaprt/tooltip
+```
 
 Import the stylesheet once in the application entry point:
 
+```ts
 import "@ssaprt/tooltip/style.css";
+```
 
-Basic usage
+## Basic usage
 
-TooltipProvider is not required.
+`TooltipProvider` is not required.
 
+```tsx
 "use client";
 
 import { Tooltip } from "@ssaprt/tooltip";
@@ -84,13 +71,15 @@ export const Example = () => {
         </Tooltip>
     );
 };
+```
 
 The child element becomes the tooltip anchor.
 
-Local configuration
+## Local configuration
 
 Every tooltip can define its own position, theme, animation, delay, and behavior.
 
+```tsx
 <Tooltip
     content="Saved successfully"
     position="bottom"
@@ -105,11 +94,13 @@ Every tooltip can define its own position, theme, animation, delay, and behavior
 >
     <button type="button">Save</button>
 </Tooltip>
+```
 
-Tooltip inside an element
+## Tooltip inside an element
 
 A tooltip can also be placed directly inside its target element.
 
+```tsx
 <button type="button">
     Delete
 
@@ -119,13 +110,15 @@ A tooltip can also be placed directly inside its target element.
         selectTheme="red"
     />
 </button>
+```
 
-When children is not passed to Tooltip, the immediate parent element becomes the anchor.
+When `children` is not passed to `Tooltip`, the immediate parent element becomes the anchor.
 
-Optional global provider
+## Optional global provider
 
-Use TooltipProvider when many tooltips should share the same initial position, preset theme, custom theme overrides, or animations.
+Use `TooltipProvider` when many tooltips should share the same initial position, preset theme, custom theme overrides, animations, interactive behavior, or hide delay.
 
+```tsx
 "use client";
 
 import { TooltipProvider } from "@ssaprt/tooltip";
@@ -140,6 +133,8 @@ export const AppProvider = ({
         <TooltipProvider
             defaultRenderPosition="top"
             selectTheme="glass"
+            interactive
+            hideDelay={300}
             animation={{
                 show: "slide",
                 hide: "fade",
@@ -151,9 +146,11 @@ export const AppProvider = ({
         </TooltipProvider>
     );
 };
+```
 
 All descendant tooltips inherit these values unless they override them locally.
 
+```tsx
 <Tooltip content="Uses provider defaults">
     <button type="button">Default tooltip</button>
 </Tooltip>
@@ -162,6 +159,8 @@ All descendant tooltips inherit these values unless they override them locally.
     content="Uses local settings"
     position="right"
     selectTheme="comic"
+    interactive={false}
+    hideDelay={120}
     animation={{
         show: "zoom",
         hide: "scale",
@@ -170,25 +169,23 @@ All descendant tooltips inherit these values unless they override them locally.
 >
     <button type="button">Local tooltip</button>
 </Tooltip>
+```
 
-Configuration priority
+## Configuration priority
 
 Local tooltip values have priority over provider defaults.
 
 The effective configuration is resolved in this order:
 
-Props passed directly to Tooltip
-
-Local customTheme
-
-Values from TooltipProvider
-
-Animation settings from the selected preset theme
-
-Built-in defaults
+1. Props passed directly to `Tooltip`
+2. Local `customTheme`
+3. Values from `TooltipProvider`
+4. Animation settings from the selected preset theme
+5. Built-in defaults
 
 The default built-in values are:
 
+```ts
 const defaults = {
     position: "top",
     selectTheme: "primary",
@@ -196,18 +193,26 @@ const defaults = {
     hideAnimation: "fade",
     animationSpeed: "120ms",
     animationEasing: "ease-in-out",
+    interactive: false,
+    hideDelay: 120,
 };
+```
 
-Text content
+Interactive tooltips use a default hide delay of `240ms` when no local or provider value is supplied.
 
+## Text content
+
+```tsx
 <Tooltip content="Simple text tooltip">
     <span>Hover me</span>
 </Tooltip>
+```
 
-The content prop accepts any valid ReactNode.
+The `content` prop accepts any valid `ReactNode`.
 
-React content
+## React content
 
+```tsx
 <Tooltip
     content={
         <div>
@@ -218,11 +223,13 @@ React content
 >
     <button type="button">Build status</button>
 </Tooltip>
+```
 
-Interactive content
+## Interactive content
 
-Set interactive when the user must be able to move the pointer into the tooltip and interact with its content.
+Set `interactive` when the user must be able to move the pointer into the tooltip and interact with its content.
 
+```tsx
 <Tooltip
     interactive
     hideDelay={300}
@@ -236,37 +243,25 @@ Set interactive when the user must be able to move the pointer into the tooltip 
 >
     <button type="button">Open controls</button>
 </Tooltip>
+```
 
-With interactive enabled:
+With `interactive` enabled:
 
-The tooltip remains visible while the pointer is inside it
+- The tooltip remains visible while the pointer is inside it
+- Buttons, links, inputs, selects, and other controls remain usable
+- Moving from the anchor to the tooltip does not close it
+- Moving away from both the anchor and tooltip starts the hide delay
+- Clicking outside closes the tooltip
+- Pressing `Escape` closes the tooltip
+- Focus can move between the anchor and tooltip content
 
-Buttons, links, inputs, selects, and other controls remain usable
+The default hide delay is `120ms`. For interactive tooltips, the default is `240ms`. A custom `hideDelay` overrides both values.
 
-Moving from the anchor to the tooltip does not close it
-
-Moving away from both the anchor and tooltip starts the hide delay
-
-Clicking outside closes the tooltip
-
-Pressing Escape closes the tooltip
-
-Focus can move between the anchor and tooltip content
-
-The default hide delay is:
-
-120
-
-For interactive tooltips, the default is:
-
-240
-
-A custom hideDelay overrides both values.
-
-Rich components and media
+## Rich components and media
 
 Tooltip content is not limited to a short string. It can contain complete React interfaces, including cards, media previews, forms, navigation, images, audio, and video.
 
+```tsx
 <Tooltip
     interactive
     position="right"
@@ -314,21 +309,25 @@ Tooltip content is not limited to a short string. It can contain complete React 
 >
     <button type="button">Show preview</button>
 </Tooltip>
+```
 
-The tooltip uses ResizeObserver, so its position is recalculated when dynamic content changes size.
+The tooltip uses `ResizeObserver`, so its position is recalculated when dynamic content changes size.
 
-Trigger elements
+## Trigger elements
 
-Wrapping a DOM element
+### Wrapping a DOM element
 
+```tsx
 <Tooltip content="Open settings">
     <button type="button">Settings</button>
 </Tooltip>
+```
 
-Wrapping a custom React component
+### Wrapping a custom React component
 
 The wrapped component must forward its ref to a DOM element.
 
+```tsx
 import { forwardRef } from "react";
 
 const ActionButton = forwardRef<
@@ -347,11 +346,13 @@ export const Example = () => {
         </Tooltip>
     );
 };
+```
 
-Using a tooltip inside a custom component
+### Using a tooltip inside a custom component
 
-When forwarding a ref is not convenient, place Tooltip inside the final DOM element.
+When forwarding a ref is not convenient, place `Tooltip` inside the final DOM element.
 
+```tsx
 export const ActionButton = () => {
     return (
         <button type="button">
@@ -360,117 +361,127 @@ export const ActionButton = () => {
         </button>
     );
 };
+```
 
-Placement
+## Placement
 
 Available placements:
 
+```ts
 type TooltipPlacement =
     | "top"
     | "bottom"
     | "left"
     | "right";
+```
 
 Example:
 
+```tsx
 <Tooltip content="Rendered on the left" position="left">
     <button type="button">Left</button>
 </Tooltip>
+```
 
 The requested placement is preferred, not forced.
 
 When there is not enough space, the tooltip checks the opposite side:
 
-top can fall back to bottom
-
-bottom can fall back to top
-
-left can fall back to right
-
-right can fall back to left
+- `top` can fall back to `bottom`
+- `bottom` can fall back to `top`
+- `left` can fall back to `right`
+- `right` can fall back to `left`
 
 The final position is clamped to the viewport so the tooltip does not render outside the visible area.
 
 The arrow is repositioned automatically and constrained to the straight section of the edge so it does not overlap rounded corners.
 
-Built-in themes
+## Built-in themes
 
 The package includes more than 50 ready-to-use presets with different visual styles, including clean, dark, comic, terminal, glass, neon, retro, cyberpunk, paper, metallic, natural, warning, and decorative themes.
 
 Examples include:
 
-"primary"
-"secondary"
-"dark"
-"light"
-"comic"
-"manga"
-"newspaper"
-"stickyNote"
-"blueprint"
-"terminal"
-"crt"
-"pixel"
-"arcade"
-"cyberpunk"
-"synthwave"
-"vaporwave"
-"hologram"
-"glass"
-"frost"
-"clay"
-"bubblegum"
-"candy"
-"watermelon"
-"lemon"
-"lava"
-"ember"
-"toxic"
-"radioactive"
-"hazard"
-"policeTape"
-"construction"
-"parchment"
-"pirateMap"
-"royal"
-"noir"
-"detective"
-"dossier"
-"medical"
-"laboratory"
-"circuit"
-"galaxy"
-"aurora"
-"oceanDepths"
-"coralReef"
-"forest"
-"moss"
-"desert"
-"snow"
-"chrome"
-"goldFoil"
-"bronze"
-"brutalist"
-"chalkboard"
+```ts
+type PresetsThemeType =
+    | "primary"
+    | "secondary"
+    | "dark"
+    | "light"
+    | "comic"
+    | "manga"
+    | "newspaper"
+    | "stickyNote"
+    | "blueprint"
+    | "terminal"
+    | "crt"
+    | "pixel"
+    | "arcade"
+    | "cyberpunk"
+    | "synthwave"
+    | "vaporwave"
+    | "hologram"
+    | "glass"
+    | "frost"
+    | "clay"
+    | "bubblegum"
+    | "candy"
+    | "watermelon"
+    | "lemon"
+    | "lava"
+    | "ember"
+    | "toxic"
+    | "radioactive"
+    | "hazard"
+    | "policeTape"
+    | "construction"
+    | "parchment"
+    | "pirateMap"
+    | "royal"
+    | "noir"
+    | "detective"
+    | "dossier"
+    | "medical"
+    | "laboratory"
+    | "circuit"
+    | "galaxy"
+    | "aurora"
+    | "oceanDepths"
+    | "coralReef"
+    | "forest"
+    | "moss"
+    | "desert"
+    | "snow"
+    | "chrome"
+    | "goldFoil"
+    | "bronze"
+    | "brutalist"
+    | "chalkboard";
+```
 
 Select a preset globally:
 
+```tsx
 <TooltipProvider selectTheme="cyberpunk">
     <App />
 </TooltipProvider>
+```
 
 Or locally:
 
+```tsx
 <Tooltip content="Local theme" selectTheme="terminal">
     <button type="button">Terminal</button>
 </Tooltip>
+```
 
-PresetsThemeType is derived from the actual preset map, so TypeScript only accepts available theme names.
+`PresetsThemeType` is derived from the actual preset map, so TypeScript only accepts available theme names.
 
-Custom themes
+## Custom themes
 
-A custom theme can be applied globally through TooltipProvider or locally through Tooltip.
+A custom theme can be applied globally through `TooltipProvider` or locally through `Tooltip`.
 
+```tsx
 <Tooltip
     content="Custom theme"
     customTheme={{
@@ -502,11 +513,13 @@ A custom theme can be applied globally through TooltipProvider or locally throug
 >
     <button type="button">Custom</button>
 </Tooltip>
+```
 
 Custom theme values are merged with the selected preset. Only the values that must change need to be supplied.
 
-Theme type
+### Theme type
 
+```ts
 import type { CSSProperties } from "react";
 
 type TooltipSize =
@@ -528,27 +541,23 @@ type ThemeType = {
     };
     animation?: TooltipAnimationOptions;
 };
+```
 
-body.background
+### `body.background`
 
 Controls the complete tooltip surface background, including the arrow.
 
 Supported values include:
 
-Solid colors
+- Solid colors
+- Linear gradients
+- Radial gradients
+- Conic gradients
+- Repeating gradients
+- CSS variables
+- Other valid CSS background values
 
-Linear gradients
-
-Radial gradients
-
-Conic gradients
-
-Repeating gradients
-
-CSS variables
-
-Other valid CSS background values
-
+```tsx
 <Tooltip
     content="Gradient"
     customTheme={{
@@ -560,13 +569,15 @@ Other valid CSS background values
 >
     <button type="button">Gradient</button>
 </Tooltip>
+```
 
-body.style
+### `body.style`
 
-Accepts regular React CSSProperties for the tooltip content and surface configuration.
+Accepts regular React `CSSProperties` for the tooltip content and surface configuration.
 
 Common options include:
 
+```ts
 {
     color: "#ffffff",
     padding: "10px 14px",
@@ -578,13 +589,15 @@ Common options include:
     textAlign: "left",
     maxWidth: "320px",
 }
+```
 
 Borders and corner radii are used to generate the unified body-and-arrow surface.
 
-body.filter
+### `body.filter`
 
 Applies a filter to the complete tooltip surface, including the arrow.
 
+```tsx
 <Tooltip
     content="Shadow"
     customTheme={{
@@ -596,11 +609,13 @@ Applies a filter to the complete tooltip surface, including the arrow.
 >
     <button type="button">Shadow</button>
 </Tooltip>
+```
 
-body.className
+### `body.className`
 
 Adds a class name to the tooltip content container.
 
+```tsx
 <Tooltip
     content="Class name"
     customTheme={{
@@ -611,27 +626,33 @@ Adds a class name to the tooltip content container.
 >
     <button type="button">Styled</button>
 </Tooltip>
+```
 
-arrow.size
+### `arrow.size`
 
 Controls how far the arrow extends from the tooltip body.
 
+```ts
 arrow: {
     size: "10px",
 }
+```
 
-arrow.width
+### `arrow.width`
 
 Controls the width of the arrow base.
 
+```ts
 arrow: {
     width: "24px",
 }
+```
 
-Animations
+## Animations
 
 Show and hide animations can be configured independently.
 
+```tsx
 <Tooltip
     content="Animated tooltip"
     animation={{
@@ -643,9 +664,11 @@ Show and hide animations can be configured independently.
 >
     <button type="button">Animate</button>
 </Tooltip>
+```
 
 Available animation types:
 
+```ts
 type TooltipAnimationType =
     | "fade"
     | "slide"
@@ -655,9 +678,11 @@ type TooltipAnimationType =
     | "flip"
     | "bounce"
     | "none";
+```
 
 Animation options:
 
+```ts
 type TooltipAnimationSpeed =
     | `${number}ms`
     | `${number}s`;
@@ -668,9 +693,11 @@ type TooltipAnimationOptions = {
     speed?: TooltipAnimationSpeed;
     easing?: CSSProperties["animationTimingFunction"];
 };
+```
 
 Disable animations:
 
+```tsx
 <Tooltip
     content="No animation"
     animation={{
@@ -682,66 +709,32 @@ Disable animations:
 >
     <button type="button">Static</button>
 </Tooltip>
+```
 
-The stylesheet also respects prefers-reduced-motion and reduces animation duration when the user requests reduced motion.
+The stylesheet also respects `prefers-reduced-motion` and reduces animation duration when the user requests reduced motion.
 
-TooltipProvider API
+## `TooltipProvider` API
 
-TooltipProvider is optional and only supplies global defaults to descendant tooltips.
+`TooltipProvider` is optional and only supplies global defaults to descendant tooltips.
 
-Property
-
-Type
-
-Default
-
-Description
-
-children
-
-ReactNode
-
-Required
-
-Components that can consume the provider defaults
-
-defaultRenderPosition
-
-"top" | "bottom" | "left" | "right"
-
-"top"
-
-Default preferred placement
-
-selectTheme
-
-PresetsThemeType
-
-"primary"
-
-Default built-in theme preset
-
-customTheme
-
-ThemeType
-
-undefined
-
-Global theme overrides merged with the selected preset
-
-animation
-
-TooltipAnimationOptions
-
-Theme settings
-
-Global show and hide animation overrides
+| Property | Type | Default | Description |
+| --- | --- | --- | --- |
+| `children` | `ReactNode` | Required | Components that can consume the provider defaults |
+| `defaultRenderPosition` | `"top" \| "bottom" \| "left" \| "right"` | `"top"` | Default preferred placement |
+| `selectTheme` | `PresetsThemeType` | `"primary"` | Default built-in theme preset |
+| `customTheme` | `ThemeType` | `undefined` | Global theme overrides merged with the selected preset |
+| `animation` | `TooltipAnimationOptions` | Theme settings | Global show and hide animation overrides |
+| `interactive` | `boolean` | `false` | Enables interactive behavior for descendant tooltips |
+| `hideDelay` | `number` | `120`, or `240` when interactive | Global delay before descendant tooltips begin hiding |
 
 Complete provider example:
 
+```tsx
 <TooltipProvider
     defaultRenderPosition="bottom"
     selectTheme="glass"
+    interactive
+    hideDelay={300}
     customTheme={{
         body: {
             style: {
@@ -765,91 +758,25 @@ Complete provider example:
 >
     <App />
 </TooltipProvider>
+```
 
-Tooltip API
+## `Tooltip` API
 
-Property
-
-Type
-
-Default
-
-Description
-
-content
-
-ReactNode
-
-Required
-
-Text, JSX, components, controls, media, or any other React content
-
-children
-
-ReactElement
-
-Optional
-
-Element used as the tooltip anchor; without it, the immediate parent is used
-
-position
-
-TooltipPlacement
-
-Provider value or "top"
-
-Preferred tooltip placement
-
-selectTheme
-
-PresetsThemeType
-
-Provider value or "primary"
-
-Local built-in theme preset
-
-customTheme
-
-ThemeType
-
-undefined
-
-Local theme overrides
-
-animation
-
-TooltipAnimationOptions
-
-Provider or theme settings
-
-Local show and hide animation settings
-
-disabled
-
-boolean
-
-false
-
-Prevents the tooltip from opening
-
-interactive
-
-boolean
-
-false
-
-Enables pointer and focus interaction inside the tooltip
-
-hideDelay
-
-number
-
-120, or 240 when interactive
-
-Delay in milliseconds before the tooltip begins hiding
+| Property | Type | Default | Description |
+| --- | --- | --- | --- |
+| `content` | `ReactNode` | Required | Text, JSX, components, controls, media, or any other React content |
+| `children` | `ReactElement` | Optional | Element used as the tooltip anchor; without it, the immediate parent is used |
+| `position` | `TooltipPlacement` | Provider value or `"top"` | Preferred tooltip placement |
+| `selectTheme` | `PresetsThemeType` | Provider value or `"primary"` | Local built-in theme preset |
+| `customTheme` | `ThemeType` | `undefined` | Local theme overrides |
+| `animation` | `TooltipAnimationOptions` | Provider or theme settings | Local show and hide animation settings |
+| `disabled` | `boolean` | `false` | Prevents the tooltip from opening |
+| `interactive` | `boolean` | Provider value or `false` | Enables pointer and focus interaction inside the tooltip |
+| `hideDelay` | `number` | Provider value, `120`, or `240` when interactive | Delay in milliseconds before the tooltip begins hiding |
 
 Complete tooltip example:
 
+```tsx
 <Tooltip
     content={
         <div>
@@ -877,9 +804,11 @@ Complete tooltip example:
 >
     <button type="button">Account</button>
 </Tooltip>
+```
 
-Public interfaces
+## Public interfaces
 
+```ts
 import type { ReactElement, ReactNode } from "react";
 
 export type TooltipPlacement =
@@ -889,10 +818,13 @@ export type TooltipPlacement =
     | "right";
 
 export interface TooltipProviderInterface {
+    children: ReactNode;
     defaultRenderPosition?: TooltipPlacement;
     selectTheme?: PresetsThemeType;
     customTheme?: ThemeType;
     animation?: TooltipAnimationOptions;
+    interactive?: boolean;
+    hideDelay?: number;
 }
 
 export interface TooltipInterface {
@@ -906,9 +838,11 @@ export interface TooltipInterface {
     interactive?: boolean;
     hideDelay?: number;
 }
+```
 
-TypeScript exports
+## TypeScript exports
 
+```ts
 import {
     Tooltip,
     TooltipProvider,
@@ -925,89 +859,71 @@ import type {
     TooltipProviderInterface,
     TooltipSize,
 } from "@ssaprt/tooltip";
+```
 
-Browser support
+## Browser support
 
 The package is designed for consistent behavior in modern desktop and mobile browsers:
 
-Google Chrome
-
-Apple Safari
-
-Mozilla Firefox
-
-Microsoft Edge
-
-iOS Safari
-
-Chromium-based Android browsers
+- Google Chrome
+- Apple Safari
+- Mozilla Firefox
+- Microsoft Edge
+- iOS Safari
+- Chromium-based Android browsers
 
 The implementation uses browser-standard APIs and technologies:
 
-React portals
+- React portals
+- Pointer events
+- Touch input
+- Focus events
+- `ResizeObserver`
+- `requestAnimationFrame`
+- SVG paths and masks
+- CSS custom properties
+- CSS gradients
+- CSS filters
+- Fixed viewport positioning
 
-Pointer events
-
-Touch input
-
-Focus events
-
-ResizeObserver
-
-requestAnimationFrame
-
-SVG paths and masks
-
-CSS custom properties
-
-CSS gradients
-
-CSS filters
-
-Fixed viewport positioning
-
-Tooltips are rendered into document.body, so they are not normally clipped by overflow: hidden or overflow: auto on application containers.
+Tooltips are rendered into `document.body`, so they are not normally clipped by `overflow: hidden` or `overflow: auto` on application containers.
 
 The position is recalculated when:
 
-The window is resized
-
-The page or an ancestor is scrolled
-
-Tooltip content changes dimensions
-
-Media or dynamic components change the tooltip size
+- The window is resized
+- The page or an ancestor is scrolled
+- Tooltip content changes dimensions
+- Media or dynamic components change the tooltip size
 
 Legacy Internet Explorer is not supported.
 
-Mouse, keyboard, and touch behavior
+## Mouse, keyboard, and touch behavior
 
-Desktop pointer behavior:
+### Desktop pointer behavior
 
-Pointer enter opens the tooltip
+- Pointer enter opens the tooltip
+- Pointer leave starts the configured hide delay
+- Interactive content keeps the tooltip open while hovered
+- Moving through the safe area between the anchor and tooltip keeps an interactive tooltip open
 
-Pointer leave starts the configured hide delay
+### Keyboard behavior
 
-Interactive content keeps the tooltip open while hovered
+- Focusing the anchor opens the tooltip
+- Focus can move into interactive content
+- `Escape` closes the tooltip
 
-Keyboard behavior:
+### Touch behavior
 
-Focusing the anchor opens the tooltip
+- A completed tap on the anchor toggles the tooltip
+- Moving the finger to scroll does not open the tooltip
+- A cancelled pointer gesture does not open the tooltip
+- Tapping outside closes the tooltip
 
-Focus can move into interactive content
+## React and Next.js
 
-Escape closes the tooltip
+`Tooltip` and `TooltipProvider` use client-side browser APIs and React portals. In Next.js, render them from a Client Component.
 
-Touch behavior:
-
-Tapping the anchor toggles the tooltip
-
-Tapping outside closes it
-
-React and Next.js
-
-Tooltip and TooltipProvider use client-side browser APIs and React portals. In Next.js, render them from a Client Component.
-
+```tsx
 "use client";
 
 import { Tooltip, TooltipProvider } from "@ssaprt/tooltip";
@@ -1027,9 +943,11 @@ export const TooltipClientProvider = ({
         </TooltipProvider>
     );
 };
+```
 
 Use it in a layout:
 
+```tsx
 import { TooltipClientProvider } from "./TooltipClientProvider";
 
 export default function RootLayout({
@@ -1047,25 +965,22 @@ export default function RootLayout({
         </html>
     );
 }
+```
 
 A provider is still optional. A standalone tooltip can be rendered directly from any Client Component.
 
-Rendering and overflow
+## Rendering and overflow
 
-The visible tooltip is rendered through a React portal into document.body.
+The visible tooltip is rendered through a React portal into `document.body`.
 
 This provides several benefits:
 
-Parent overflow normally does not clip the tooltip
+- Parent overflow normally does not clip the tooltip
+- The tooltip is positioned relative to the viewport
+- Scroll and resize updates are handled globally
+- Complex content is isolated from the anchor layout
+- A high stacking level can be used without depending on the anchor's stacking context
 
-The tooltip is positioned relative to the viewport
-
-Scroll and resize updates are handled globally
-
-Complex content is isolated from the anchor layout
-
-A high stacking level can be used without depending on the anchor's stacking context
-
-License
+## License
 
 MIT
