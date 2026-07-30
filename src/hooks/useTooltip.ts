@@ -62,6 +62,103 @@ type TouchGesture = {
 
 type InteractivePointerArea = "direct" | "bridge" | "outside";
 
+type TooltipOwner = symbol;
+
+type InputModality = "keyboard" | "pointer";
+
+type ActiveTooltipSession = {
+    owner: TooltipOwner;
+    interactive: boolean;
+    protectsPoint: (point: Point) => boolean;
+    close: () => void;
+};
+
+let activeTooltipSession: ActiveTooltipSession | null = null;
+let inputModality: InputModality = "pointer";
+let inputModalitySubscribers = 0;
+
+const handleGlobalPointerDown = () => {
+    inputModality = "pointer";
+};
+
+const keyboardFocusKeys = new Set([
+    "Tab",
+    "Enter",
+    " ",
+    "ArrowUp",
+    "ArrowDown",
+    "ArrowLeft",
+    "ArrowRight",
+    "Home",
+    "End",
+    "PageUp",
+    "PageDown",
+]);
+
+const handleGlobalKeyDown = (event: KeyboardEvent) => {
+    if (
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        !keyboardFocusKeys.has(event.key)
+    ) {
+        return;
+    }
+
+    inputModality = "keyboard";
+};
+
+const subscribeInputModality = () => {
+    inputModalitySubscribers += 1;
+
+    if (inputModalitySubscribers !== 1) {
+        return;
+    }
+
+    document.addEventListener("pointerdown", handleGlobalPointerDown, true);
+    document.addEventListener("keydown", handleGlobalKeyDown, true);
+};
+
+const unsubscribeInputModality = () => {
+    inputModalitySubscribers = Math.max(0, inputModalitySubscribers - 1);
+
+    if (inputModalitySubscribers !== 0) {
+        return;
+    }
+
+    document.removeEventListener("pointerdown", handleGlobalPointerDown, true);
+    document.removeEventListener("keydown", handleGlobalKeyDown, true);
+};
+
+const requestTooltipActivation = (
+    session: ActiveTooltipSession,
+    point?: Point,
+) => {
+    const currentSession = activeTooltipSession;
+
+    if (currentSession && currentSession.owner !== session.owner) {
+        if (
+            point &&
+            currentSession.interactive &&
+            currentSession.protectsPoint(point)
+        ) {
+            return false;
+        }
+
+        currentSession.close();
+    }
+
+    activeTooltipSession = session;
+
+    return true;
+};
+
+const clearTooltipActivation = (owner: TooltipOwner) => {
+    if (activeTooltipSession?.owner === owner) {
+        activeTooltipSession = null;
+    }
+};
+
 const oppositePlacement: Record<TooltipPlacement, TooltipPlacement> = {
     top: "bottom",
     bottom: "top",
@@ -230,6 +327,7 @@ export const useTooltip = ({
 }: UseTooltipOptions) => {
     const tooltipRef = useRef<HTMLDivElement>(null);
     const bodyRef = useRef<HTMLDivElement>(null);
+    const ownerRef = useRef<TooltipOwner>(Symbol("tooltip"));
 
     const hideTimerRef = useRef<number | null>(null);
     const firstFrameRef = useRef<number | null>(null);
@@ -243,6 +341,9 @@ export const useTooltip = ({
         y: Number.NaN,
         pointerType: "",
     });
+    const interactiveAreaAtPointRef = useRef<
+        (point: Point) => InteractivePointerArea
+    >(() => "outside");
     const touchGestureRef = useRef<TouchGesture | null>(null);
     const suppressFocusUntilRef = useRef(0);
 
@@ -428,7 +529,11 @@ export const useTooltip = ({
     }, [anchor, getAvailableSpace, preferredPlacement]);
 
     const isFocusInsideTooltipRegion = useCallback(() => {
-        if (!anchor || typeof document === "undefined") {
+        if (
+            !anchor ||
+            typeof document === "undefined" ||
+            inputModality !== "keyboard"
+        ) {
             return false;
         }
 
@@ -439,40 +544,28 @@ export const useTooltip = ({
             return false;
         }
 
-        if (interactive && tooltip?.contains(activeElement)) {
-            return true;
-        }
-
         return (
-            anchor.contains(activeElement) &&
-            activeElement instanceof Element &&
-            activeElement.matches(":focus-visible")
+            anchor.contains(activeElement) ||
+            Boolean(interactive && tooltip?.contains(activeElement))
         );
     }, [anchor, interactive]);
 
-    const getInteractivePointerArea =
-        useCallback((): InteractivePointerArea => {
+    const getInteractivePointerAreaAtPoint = useCallback(
+        (point: Point): InteractivePointerArea => {
             if (!interactive || !anchor) {
                 return "outside";
             }
 
-            const pointer = pointerRef.current;
             const tooltip = tooltipRef.current;
 
             if (
                 !tooltip ||
-                (pointer.pointerType !== "mouse" &&
-                    pointer.pointerType !== "pen") ||
-                !Number.isFinite(pointer.x) ||
-                !Number.isFinite(pointer.y)
+                !Number.isFinite(point.x) ||
+                !Number.isFinite(point.y)
             ) {
                 return "outside";
             }
 
-            const point = {
-                x: pointer.x,
-                y: pointer.y,
-            };
             const anchorRect = anchor.getBoundingClientRect();
             const tooltipRect = tooltip.getBoundingClientRect();
 
@@ -498,7 +591,32 @@ export const useTooltip = ({
             );
 
             return isPointInsidePolygon(point, bridge) ? "bridge" : "outside";
-        }, [anchor, interactive, placement]);
+        },
+        [anchor, interactive, placement],
+    );
+
+    useLayoutEffect(() => {
+        interactiveAreaAtPointRef.current = getInteractivePointerAreaAtPoint;
+    }, [getInteractivePointerAreaAtPoint]);
+
+    const getInteractivePointerArea =
+        useCallback((): InteractivePointerArea => {
+            const pointer = pointerRef.current;
+
+            if (
+                (pointer.pointerType !== "mouse" &&
+                    pointer.pointerType !== "pen") ||
+                !Number.isFinite(pointer.x) ||
+                !Number.isFinite(pointer.y)
+            ) {
+                return "outside";
+            }
+
+            return getInteractivePointerAreaAtPoint({
+                x: pointer.x,
+                y: pointer.y,
+            });
+        }, [getInteractivePointerAreaAtPoint]);
 
     const removeTooltip = useCallback(() => {
         clearHideTimer();
@@ -506,6 +624,8 @@ export const useTooltip = ({
         clearInteractiveFrame();
         pendingHideRef.current = false;
         interactiveBridgeDeadlineRef.current = 0;
+        clearTooltipActivation(ownerRef.current);
+        setMounted(false);
         updatePhase("hidden");
     }, [clearEnterFrames, clearHideTimer, clearInteractiveFrame, updatePhase]);
 
@@ -601,24 +721,63 @@ export const useTooltip = ({
         ],
     );
 
-    const showTooltip = useCallback(() => {
-        if (!anchor || disabled) {
-            return;
-        }
+    const showTooltip = useCallback(
+        (activationPoint?: Point) => {
+            if (!anchor || disabled) {
+                return;
+            }
 
-        clearHideTimer();
-        clearEnterFrames();
-        interactiveBridgeDeadlineRef.current = 0;
-        pendingHideRef.current = false;
-        setMounted(true);
+            const activated = requestTooltipActivation(
+                {
+                    owner: ownerRef.current,
+                    interactive,
+                    protectsPoint: (point) => {
+                        if (phaseRef.current === "hidden") {
+                            return false;
+                        }
 
-        if (phaseRef.current === "entering" || phaseRef.current === "visible") {
-            return;
-        }
+                        return (
+                            interactiveAreaAtPointRef.current(point) !==
+                            "outside"
+                        );
+                    },
+                    close: () => {
+                        hideTooltip(true);
+                    },
+                },
+                activationPoint,
+            );
 
-        updatePhase("preparing");
-        setShowVersion((value) => value + 1);
-    }, [anchor, clearEnterFrames, clearHideTimer, disabled, updatePhase]);
+            if (!activated) {
+                return;
+            }
+
+            clearHideTimer();
+            clearEnterFrames();
+            interactiveBridgeDeadlineRef.current = 0;
+            pendingHideRef.current = false;
+            setMounted(true);
+
+            if (
+                phaseRef.current === "entering" ||
+                phaseRef.current === "visible"
+            ) {
+                return;
+            }
+
+            updatePhase("preparing");
+            setShowVersion((value) => value + 1);
+        },
+        [
+            anchor,
+            clearEnterFrames,
+            clearHideTimer,
+            disabled,
+            hideTooltip,
+            interactive,
+            updatePhase,
+        ],
+    );
 
     const keepTooltipOpen = useCallback(() => {
         if (!interactive || disabled) {
@@ -734,6 +893,15 @@ export const useTooltip = ({
     ]);
 
     useEffect(() => {
+        subscribeInputModality();
+
+        return () => {
+            unsubscribeInputModality();
+            clearTooltipActivation(ownerRef.current);
+        };
+    }, []);
+
+    useEffect(() => {
         if (!anchor) {
             removeTooltip();
             return;
@@ -754,7 +922,10 @@ export const useTooltip = ({
                 return;
             }
 
-            showTooltip();
+            showTooltip({
+                x: event.clientX,
+                y: event.clientY,
+            });
         };
 
         const onPointerLeave = (event: PointerEvent) => {
@@ -859,7 +1030,10 @@ export const useTooltip = ({
                 phaseRef.current === "hidden" ||
                 phaseRef.current === "leaving"
             ) {
-                showTooltip();
+                showTooltip({
+                    x: event.clientX,
+                    y: event.clientY,
+                });
             } else {
                 hideTooltip(true);
             }
@@ -985,7 +1159,9 @@ export const useTooltip = ({
         };
 
         const onFocusIn = () => {
-            keepTooltipOpen();
+            if (inputModality === "keyboard") {
+                keepTooltipOpen();
+            }
         };
 
         const onFocusOut = (event: FocusEvent) => {
