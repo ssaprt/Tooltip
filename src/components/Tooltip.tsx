@@ -3,10 +3,10 @@ import {
     Children,
     cloneElement,
     CSSProperties,
-    MutableRefObject,
     ReactElement,
     Ref,
     RefCallback,
+    RefObject,
     useCallback,
     useLayoutEffect,
     useMemo,
@@ -49,7 +49,7 @@ const assignRef = <T,>(ref: Ref<T> | undefined, value: T | null) => {
     }
 
     if (ref) {
-        (ref as MutableRefObject<T | null>).current = value;
+        (ref as RefObject<T | null>).current = value;
     }
 };
 
@@ -61,7 +61,7 @@ export const Tooltip = ({
     customTheme,
     animation,
     disabled = false,
-    interactive = false,
+    interactive,
     hideDelay,
 }: TooltipInterface) => {
     const defaults = useTooltipDefaults();
@@ -146,6 +146,8 @@ export const Tooltip = ({
         "ease-in-out";
 
     const preferredPlacement = position ?? defaults.defaultRenderPosition;
+    const resolvedInteractive = interactive ?? defaults.interactive;
+    const resolvedHideDelay = hideDelay ?? defaults.hideDelay;
 
     const {
         shouldRender,
@@ -159,8 +161,8 @@ export const Tooltip = ({
         anchor,
         preferredPlacement,
         disabled: disabled || content === null || content === undefined,
-        interactive,
-        hideDelay,
+        interactive: resolvedInteractive,
+        hideDelay: resolvedHideDelay,
     });
 
     const arrowSize = theme.arrow?.size ?? "6px";
@@ -207,7 +209,9 @@ export const Tooltip = ({
                           `tooltip-container--phase-${phase}`,
                           `tooltip-container--show-${showAnimation}`,
                           `tooltip-container--hide-${hideAnimation}`,
-                          interactive ? "tooltip-container--interactive" : null,
+                          resolvedInteractive
+                              ? "tooltip-container--interactive"
+                              : null,
                       ]
                           .filter(Boolean)
                           .join(" ")}

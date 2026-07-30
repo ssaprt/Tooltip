@@ -2,7 +2,10 @@ import { createContext, ReactNode, useContext, useMemo } from "react";
 
 import { PresetsThemeType } from "src/config/presets";
 import { ThemeType } from "src/types/Theme.type";
-import { TooltipPlacement } from "src/types/Tooltip.interface";
+import {
+    TooltipPlacement,
+    TooltipProviderInterface,
+} from "src/types/Tooltip.interface";
 import { TooltipAnimationOptions } from "src/types/TooltipAnimation.type";
 
 type TooltipDefaults = {
@@ -10,19 +13,18 @@ type TooltipDefaults = {
     selectTheme: PresetsThemeType;
     customTheme?: ThemeType;
     animation?: TooltipAnimationOptions;
+    interactive: boolean;
+    hideDelay?: number;
 };
 
-type TooltipProviderProps = {
+type TooltipProviderProps = TooltipProviderInterface & {
     children: ReactNode;
-    defaultRenderPosition?: TooltipPlacement;
-    selectTheme?: PresetsThemeType;
-    customTheme?: ThemeType;
-    animation?: TooltipAnimationOptions;
 };
 
 const DEFAULT_TOOLTIP_VALUES: TooltipDefaults = {
     defaultRenderPosition: "top",
     selectTheme: "primary",
+    interactive: false,
 };
 
 const TooltipContext = createContext<TooltipDefaults>(DEFAULT_TOOLTIP_VALUES);
@@ -33,6 +35,8 @@ export const TooltipProvider = ({
     selectTheme = DEFAULT_TOOLTIP_VALUES.selectTheme,
     customTheme,
     animation,
+    interactive = DEFAULT_TOOLTIP_VALUES.interactive,
+    hideDelay,
 }: TooltipProviderProps) => {
     const value = useMemo<TooltipDefaults>(() => {
         return {
@@ -40,8 +44,17 @@ export const TooltipProvider = ({
             selectTheme,
             customTheme,
             animation,
+            interactive,
+            hideDelay,
         };
-    }, [animation, customTheme, defaultRenderPosition, selectTheme]);
+    }, [
+        animation,
+        customTheme,
+        defaultRenderPosition,
+        hideDelay,
+        interactive,
+        selectTheme,
+    ]);
 
     return (
         <TooltipContext.Provider value={value}>

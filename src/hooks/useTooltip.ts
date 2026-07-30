@@ -1,5 +1,3 @@
-"use client";
-
 import {
     CSSProperties,
     useCallback,
@@ -17,6 +15,13 @@ const VIEWPORT_PADDING = 8;
 const DEFAULT_ARROW_SIZE = 6;
 const DEFAULT_TOOLTIP_GAP = 10;
 const ARROW_EDGE_OFFSET = 10;
+const INTERACTIVE_DIRECT_PADDING = 4;
+const INTERACTIVE_BRIDGE_PADDING = 8;
+const INTERACTIVE_BRIDGE_TIMEOUT = 700;
+const INTERACTIVE_RECHECK_INTERVAL = 50;
+const TOUCH_MOVE_THRESHOLD = 10;
+const TOUCH_MAX_TAP_DURATION = 600;
+const TOUCH_FOCUS_SUPPRESSION = 700;
 
 export type TooltipPhase =
     | "hidden"
@@ -37,6 +42,26 @@ type UseTooltipOptions = {
     hideDelay?: number;
 };
 
+type Point = {
+    x: number;
+    y: number;
+};
+
+type PointerSnapshot = Point & {
+    pointerType: string;
+};
+
+type TouchGesture = {
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startedAt: number;
+    moved: boolean;
+    cancelled: boolean;
+};
+
+type InteractivePointerArea = "direct" | "bridge" | "outside";
+
 const oppositePlacement: Record<TooltipPlacement, TooltipPlacement> = {
     top: "bottom",
     bottom: "top",
@@ -48,6 +73,152 @@ const clamp = (value: number, min: number, max: number) => {
     const resolvedMax = Math.max(min, max);
 
     return Math.min(Math.max(value, min), resolvedMax);
+};
+
+const isPointInsideRect = (point: Point, rect: DOMRect, padding = 0) => {
+    return (
+        point.x >= rect.left - padding &&
+        point.x <= rect.right + padding &&
+        point.y >= rect.top - padding &&
+        point.y <= rect.bottom + padding
+    );
+};
+
+const isPointOnSegment = (point: Point, start: Point, end: Point) => {
+    const cross =
+        (point.y - start.y) * (end.x - start.x) -
+        (point.x - start.x) * (end.y - start.y);
+
+    if (Math.abs(cross) > 0.001) {
+        return false;
+    }
+
+    return (
+        point.x >= Math.min(start.x, end.x) &&
+        point.x <= Math.max(start.x, end.x) &&
+        point.y >= Math.min(start.y, end.y) &&
+        point.y <= Math.max(start.y, end.y)
+    );
+};
+
+const isPointInsidePolygon = (point: Point, polygon: Point[]) => {
+    let inside = false;
+
+    for (
+        let currentIndex = 0, previousIndex = polygon.length - 1;
+        currentIndex < polygon.length;
+        previousIndex = currentIndex, currentIndex += 1
+    ) {
+        const current = polygon[currentIndex];
+        const previous = polygon[previousIndex];
+
+        if (isPointOnSegment(point, previous, current)) {
+            return true;
+        }
+
+        const crosses =
+            current.y > point.y !== previous.y > point.y &&
+            point.x <
+                ((previous.x - current.x) * (point.y - current.y)) /
+                    (previous.y - current.y) +
+                    current.x;
+
+        if (crosses) {
+            inside = !inside;
+        }
+    }
+
+    return inside;
+};
+
+const createInteractiveBridge = (
+    anchorRect: DOMRect,
+    tooltipRect: DOMRect,
+    placement: TooltipPlacement,
+) => {
+    const padding = INTERACTIVE_BRIDGE_PADDING;
+
+    if (placement === "top") {
+        return [
+            {
+                x: tooltipRect.left - padding,
+                y: tooltipRect.bottom - padding,
+            },
+            {
+                x: tooltipRect.right + padding,
+                y: tooltipRect.bottom - padding,
+            },
+            {
+                x: anchorRect.right + padding,
+                y: anchorRect.top + padding,
+            },
+            {
+                x: anchorRect.left - padding,
+                y: anchorRect.top + padding,
+            },
+        ];
+    }
+
+    if (placement === "bottom") {
+        return [
+            {
+                x: anchorRect.left - padding,
+                y: anchorRect.bottom - padding,
+            },
+            {
+                x: anchorRect.right + padding,
+                y: anchorRect.bottom - padding,
+            },
+            {
+                x: tooltipRect.right + padding,
+                y: tooltipRect.top + padding,
+            },
+            {
+                x: tooltipRect.left - padding,
+                y: tooltipRect.top + padding,
+            },
+        ];
+    }
+
+    if (placement === "left") {
+        return [
+            {
+                x: tooltipRect.right - padding,
+                y: tooltipRect.top - padding,
+            },
+            {
+                x: anchorRect.left + padding,
+                y: anchorRect.top - padding,
+            },
+            {
+                x: anchorRect.left + padding,
+                y: anchorRect.bottom + padding,
+            },
+            {
+                x: tooltipRect.right - padding,
+                y: tooltipRect.bottom + padding,
+            },
+        ];
+    }
+
+    return [
+        {
+            x: anchorRect.right - padding,
+            y: anchorRect.top - padding,
+        },
+        {
+            x: tooltipRect.left + padding,
+            y: tooltipRect.top - padding,
+        },
+        {
+            x: tooltipRect.left + padding,
+            y: tooltipRect.bottom + padding,
+        },
+        {
+            x: anchorRect.right - padding,
+            y: anchorRect.bottom + padding,
+        },
+    ];
 };
 
 export const useTooltip = ({
@@ -63,8 +234,17 @@ export const useTooltip = ({
     const hideTimerRef = useRef<number | null>(null);
     const firstFrameRef = useRef<number | null>(null);
     const secondFrameRef = useRef<number | null>(null);
+    const interactiveFrameRef = useRef<number | null>(null);
     const phaseRef = useRef<TooltipPhase>("hidden");
     const pendingHideRef = useRef(false);
+    const interactiveBridgeDeadlineRef = useRef(0);
+    const pointerRef = useRef<PointerSnapshot>({
+        x: Number.NaN,
+        y: Number.NaN,
+        pointerType: "",
+    });
+    const touchGestureRef = useRef<TouchGesture | null>(null);
+    const suppressFocusUntilRef = useRef(0);
 
     const [mounted, setMounted] = useState(false);
     const [phase, setPhase] = useState<TooltipPhase>("hidden");
@@ -105,6 +285,15 @@ export const useTooltip = ({
             window.cancelAnimationFrame(secondFrameRef.current);
             secondFrameRef.current = null;
         }
+    }, []);
+
+    const clearInteractiveFrame = useCallback(() => {
+        if (interactiveFrameRef.current === null) {
+            return;
+        }
+
+        window.cancelAnimationFrame(interactiveFrameRef.current);
+        interactiveFrameRef.current = null;
     }, []);
 
     const getAvailableSpace = useCallback(
@@ -160,10 +349,7 @@ export const useTooltip = ({
             return bodyWidth + distance;
         };
 
-        const preferredAvailable = getAvailableSpace(
-            preferredPlacement,
-            rect,
-        );
+        const preferredAvailable = getAvailableSpace(preferredPlacement, rect);
         const preferredRequired = getRequiredSpace(preferredPlacement);
 
         let nextPlacement = preferredPlacement;
@@ -241,12 +427,87 @@ export const useTooltip = ({
         });
     }, [anchor, getAvailableSpace, preferredPlacement]);
 
+    const isFocusInsideTooltipRegion = useCallback(() => {
+        if (!anchor || typeof document === "undefined") {
+            return false;
+        }
+
+        const activeElement = document.activeElement;
+        const tooltip = tooltipRef.current;
+
+        if (!(activeElement instanceof Node)) {
+            return false;
+        }
+
+        if (interactive && tooltip?.contains(activeElement)) {
+            return true;
+        }
+
+        return (
+            anchor.contains(activeElement) &&
+            activeElement instanceof Element &&
+            activeElement.matches(":focus-visible")
+        );
+    }, [anchor, interactive]);
+
+    const getInteractivePointerArea =
+        useCallback((): InteractivePointerArea => {
+            if (!interactive || !anchor) {
+                return "outside";
+            }
+
+            const pointer = pointerRef.current;
+            const tooltip = tooltipRef.current;
+
+            if (
+                !tooltip ||
+                (pointer.pointerType !== "mouse" &&
+                    pointer.pointerType !== "pen") ||
+                !Number.isFinite(pointer.x) ||
+                !Number.isFinite(pointer.y)
+            ) {
+                return "outside";
+            }
+
+            const point = {
+                x: pointer.x,
+                y: pointer.y,
+            };
+            const anchorRect = anchor.getBoundingClientRect();
+            const tooltipRect = tooltip.getBoundingClientRect();
+
+            if (
+                isPointInsideRect(
+                    point,
+                    anchorRect,
+                    INTERACTIVE_DIRECT_PADDING,
+                ) ||
+                isPointInsideRect(
+                    point,
+                    tooltipRect,
+                    INTERACTIVE_DIRECT_PADDING,
+                )
+            ) {
+                return "direct";
+            }
+
+            const bridge = createInteractiveBridge(
+                anchorRect,
+                tooltipRect,
+                placement,
+            );
+
+            return isPointInsidePolygon(point, bridge) ? "bridge" : "outside";
+        }, [anchor, interactive, placement]);
+
     const removeTooltip = useCallback(() => {
         clearHideTimer();
         clearEnterFrames();
+        clearInteractiveFrame();
         pendingHideRef.current = false;
+        interactiveBridgeDeadlineRef.current = 0;
         updatePhase("hidden");
-    }, [clearEnterFrames, clearHideTimer, updatePhase]);
+    }, [clearEnterFrames, clearHideTimer, clearInteractiveFrame, updatePhase]);
 
     const runHide = useCallback(() => {
         const currentPhase = phaseRef.current;
@@ -270,19 +531,74 @@ export const useTooltip = ({
 
     const hideTooltip = useCallback(
         (immediate = false) => {
-            clearHideTimer();
-
             if (immediate) {
+                clearHideTimer();
+                interactiveBridgeDeadlineRef.current = 0;
                 runHide();
                 return;
             }
 
-            hideTimerRef.current = window.setTimeout(() => {
+            if (hideTimerRef.current !== null) {
+                return;
+            }
+
+            const attemptHide = () => {
                 hideTimerRef.current = null;
+
+                if (isFocusInsideTooltipRegion()) {
+                    interactiveBridgeDeadlineRef.current = 0;
+                    return;
+                }
+
+                if (interactive) {
+                    const pointerArea = getInteractivePointerArea();
+
+                    if (pointerArea === "direct") {
+                        interactiveBridgeDeadlineRef.current = 0;
+                        return;
+                    }
+
+                    if (pointerArea === "bridge") {
+                        const now = window.performance.now();
+
+                        if (interactiveBridgeDeadlineRef.current === 0) {
+                            interactiveBridgeDeadlineRef.current =
+                                now + INTERACTIVE_BRIDGE_TIMEOUT;
+                        }
+
+                        const remaining =
+                            interactiveBridgeDeadlineRef.current - now;
+
+                        if (remaining > 0) {
+                            hideTimerRef.current = window.setTimeout(
+                                attemptHide,
+                                Math.min(
+                                    INTERACTIVE_RECHECK_INTERVAL,
+                                    remaining,
+                                ),
+                            );
+                            return;
+                        }
+                    }
+                }
+
+                interactiveBridgeDeadlineRef.current = 0;
                 runHide();
-            }, resolvedHideDelay);
+            };
+
+            hideTimerRef.current = window.setTimeout(
+                attemptHide,
+                resolvedHideDelay,
+            );
         },
-        [clearHideTimer, resolvedHideDelay, runHide],
+        [
+            clearHideTimer,
+            getInteractivePointerArea,
+            interactive,
+            isFocusInsideTooltipRegion,
+            resolvedHideDelay,
+            runHide,
+        ],
     );
 
     const showTooltip = useCallback(() => {
@@ -292,13 +608,11 @@ export const useTooltip = ({
 
         clearHideTimer();
         clearEnterFrames();
+        interactiveBridgeDeadlineRef.current = 0;
         pendingHideRef.current = false;
         setMounted(true);
 
-        if (
-            phaseRef.current === "entering" ||
-            phaseRef.current === "visible"
-        ) {
+        if (phaseRef.current === "entering" || phaseRef.current === "visible") {
             return;
         }
 
@@ -312,12 +626,62 @@ export const useTooltip = ({
         }
 
         clearHideTimer();
+        interactiveBridgeDeadlineRef.current = 0;
         pendingHideRef.current = false;
 
         if (phaseRef.current === "leaving") {
             updatePhase("visible");
         }
     }, [clearHideTimer, disabled, interactive, updatePhase]);
+
+    const processInteractivePointer = useCallback(() => {
+        if (!interactive || disabled || phaseRef.current === "hidden") {
+            return;
+        }
+
+        if (isFocusInsideTooltipRegion()) {
+            keepTooltipOpen();
+            return;
+        }
+
+        const pointerArea = getInteractivePointerArea();
+
+        if (pointerArea === "direct") {
+            keepTooltipOpen();
+            return;
+        }
+
+        if (pointerArea === "bridge") {
+            if (interactiveBridgeDeadlineRef.current === 0) {
+                interactiveBridgeDeadlineRef.current =
+                    window.performance.now() + INTERACTIVE_BRIDGE_TIMEOUT;
+            }
+
+            hideTooltip(false);
+            return;
+        }
+
+        interactiveBridgeDeadlineRef.current = 0;
+        hideTooltip(false);
+    }, [
+        disabled,
+        getInteractivePointerArea,
+        hideTooltip,
+        interactive,
+        isFocusInsideTooltipRegion,
+        keepTooltipOpen,
+    ]);
+
+    const scheduleInteractivePointerProcessing = useCallback(() => {
+        if (interactiveFrameRef.current !== null) {
+            return;
+        }
+
+        interactiveFrameRef.current = window.requestAnimationFrame(() => {
+            interactiveFrameRef.current = null;
+            processInteractivePointer();
+        });
+    }, [processInteractivePointer]);
 
     const onAnimationEnd = useCallback(() => {
         const currentPhase = phaseRef.current;
@@ -375,7 +739,17 @@ export const useTooltip = ({
             return;
         }
 
+        const updatePointer = (event: PointerEvent) => {
+            pointerRef.current = {
+                x: event.clientX,
+                y: event.clientY,
+                pointerType: event.pointerType,
+            };
+        };
+
         const onPointerEnter = (event: PointerEvent) => {
+            updatePointer(event);
+
             if (event.pointerType === "touch") {
                 return;
             }
@@ -384,19 +758,17 @@ export const useTooltip = ({
         };
 
         const onPointerLeave = (event: PointerEvent) => {
+            updatePointer(event);
+
             if (event.pointerType === "touch") {
                 return;
             }
 
-            const relatedTarget = event.relatedTarget;
-            const tooltip = tooltipRef.current;
-
-            if (
-                interactive &&
-                relatedTarget instanceof Node &&
-                tooltip?.contains(relatedTarget)
-            ) {
-                keepTooltipOpen();
+            if (interactive) {
+                interactiveBridgeDeadlineRef.current =
+                    window.performance.now() + INTERACTIVE_BRIDGE_TIMEOUT;
+                hideTooltip(false);
+                scheduleInteractivePointerProcessing();
                 return;
             }
 
@@ -404,7 +776,82 @@ export const useTooltip = ({
         };
 
         const onPointerDown = (event: PointerEvent) => {
+            updatePointer(event);
+
             if (event.pointerType !== "touch") {
+                return;
+            }
+
+            const now = window.performance.now();
+
+            touchGestureRef.current = {
+                pointerId: event.pointerId,
+                startX: event.clientX,
+                startY: event.clientY,
+                startedAt: now,
+                moved: false,
+                cancelled: false,
+            };
+            suppressFocusUntilRef.current = now + TOUCH_FOCUS_SUPPRESSION;
+        };
+
+        const onPointerMove = (event: PointerEvent) => {
+            updatePointer(event);
+
+            if (event.pointerType !== "touch") {
+                return;
+            }
+
+            const gesture = touchGestureRef.current;
+
+            if (!gesture || gesture.pointerId !== event.pointerId) {
+                return;
+            }
+
+            const distance = Math.hypot(
+                event.clientX - gesture.startX,
+                event.clientY - gesture.startY,
+            );
+
+            if (distance <= TOUCH_MOVE_THRESHOLD) {
+                return;
+            }
+
+            gesture.moved = true;
+            suppressFocusUntilRef.current =
+                window.performance.now() + TOUCH_FOCUS_SUPPRESSION;
+            hideTooltip(true);
+        };
+
+        const onPointerUp = (event: PointerEvent) => {
+            updatePointer(event);
+
+            if (event.pointerType !== "touch") {
+                return;
+            }
+
+            const gesture = touchGestureRef.current;
+            touchGestureRef.current = null;
+
+            if (!gesture || gesture.pointerId !== event.pointerId) {
+                return;
+            }
+
+            const now = window.performance.now();
+            const distance = Math.hypot(
+                event.clientX - gesture.startX,
+                event.clientY - gesture.startY,
+            );
+            const duration = now - gesture.startedAt;
+
+            suppressFocusUntilRef.current = now + TOUCH_FOCUS_SUPPRESSION;
+
+            if (
+                gesture.cancelled ||
+                gesture.moved ||
+                distance > TOUCH_MOVE_THRESHOLD ||
+                duration > TOUCH_MAX_TAP_DURATION
+            ) {
                 return;
             }
 
@@ -418,7 +865,29 @@ export const useTooltip = ({
             }
         };
 
+        const onPointerCancel = (event: PointerEvent) => {
+            if (event.pointerType !== "touch") {
+                return;
+            }
+
+            const gesture = touchGestureRef.current;
+
+            if (!gesture || gesture.pointerId !== event.pointerId) {
+                return;
+            }
+
+            gesture.cancelled = true;
+            touchGestureRef.current = null;
+            suppressFocusUntilRef.current =
+                window.performance.now() + TOUCH_FOCUS_SUPPRESSION;
+            hideTooltip(true);
+        };
+
         const onFocusIn = () => {
+            if (window.performance.now() < suppressFocusUntilRef.current) {
+                return;
+            }
+
             showTooltip();
         };
 
@@ -440,6 +909,9 @@ export const useTooltip = ({
         anchor.addEventListener("pointerenter", onPointerEnter);
         anchor.addEventListener("pointerleave", onPointerLeave);
         anchor.addEventListener("pointerdown", onPointerDown);
+        anchor.addEventListener("pointermove", onPointerMove);
+        anchor.addEventListener("pointerup", onPointerUp);
+        anchor.addEventListener("pointercancel", onPointerCancel);
         anchor.addEventListener("focusin", onFocusIn);
         anchor.addEventListener("focusout", onFocusOut);
 
@@ -447,25 +919,31 @@ export const useTooltip = ({
             anchor.removeEventListener("pointerenter", onPointerEnter);
             anchor.removeEventListener("pointerleave", onPointerLeave);
             anchor.removeEventListener("pointerdown", onPointerDown);
+            anchor.removeEventListener("pointermove", onPointerMove);
+            anchor.removeEventListener("pointerup", onPointerUp);
+            anchor.removeEventListener("pointercancel", onPointerCancel);
             anchor.removeEventListener("focusin", onFocusIn);
             anchor.removeEventListener("focusout", onFocusOut);
 
+            touchGestureRef.current = null;
             clearHideTimer();
             clearEnterFrames();
+            clearInteractiveFrame();
         };
     }, [
         anchor,
         clearEnterFrames,
         clearHideTimer,
+        clearInteractiveFrame,
         hideTooltip,
         interactive,
-        keepTooltipOpen,
         removeTooltip,
+        scheduleInteractivePointerProcessing,
         showTooltip,
     ]);
 
     useEffect(() => {
-        if (!interactive || !mounted) {
+        if (!interactive || phase === "hidden") {
             return;
         }
 
@@ -475,7 +953,17 @@ export const useTooltip = ({
             return;
         }
 
+        const updatePointer = (event: PointerEvent) => {
+            pointerRef.current = {
+                x: event.clientX,
+                y: event.clientY,
+                pointerType: event.pointerType,
+            };
+        };
+
         const onPointerEnter = (event: PointerEvent) => {
+            updatePointer(event);
+
             if (event.pointerType === "touch") {
                 return;
             }
@@ -484,21 +972,16 @@ export const useTooltip = ({
         };
 
         const onPointerLeave = (event: PointerEvent) => {
+            updatePointer(event);
+
             if (event.pointerType === "touch") {
                 return;
             }
 
-            const relatedTarget = event.relatedTarget;
-
-            if (
-                relatedTarget instanceof Node &&
-                anchor?.contains(relatedTarget)
-            ) {
-                keepTooltipOpen();
-                return;
-            }
-
+            interactiveBridgeDeadlineRef.current =
+                window.performance.now() + INTERACTIVE_BRIDGE_TIMEOUT;
             hideTooltip(false);
+            scheduleInteractivePointerProcessing();
         };
 
         const onFocusIn = () => {
@@ -535,7 +1018,42 @@ export const useTooltip = ({
         hideTooltip,
         interactive,
         keepTooltipOpen,
-        mounted,
+        phase,
+        scheduleInteractivePointerProcessing,
+    ]);
+
+    useEffect(() => {
+        if (!interactive || phase === "hidden") {
+            return;
+        }
+
+        const onDocumentPointerMove = (event: PointerEvent) => {
+            if (event.pointerType === "touch") {
+                return;
+            }
+
+            pointerRef.current = {
+                x: event.clientX,
+                y: event.clientY,
+                pointerType: event.pointerType,
+            };
+
+            scheduleInteractivePointerProcessing();
+        };
+
+        document.addEventListener("pointermove", onDocumentPointerMove, {
+            passive: true,
+        });
+
+        return () => {
+            document.removeEventListener("pointermove", onDocumentPointerMove);
+            clearInteractiveFrame();
+        };
+    }, [
+        clearInteractiveFrame,
+        interactive,
+        phase,
+        scheduleInteractivePointerProcessing,
     ]);
 
     useEffect(() => {
@@ -555,6 +1073,7 @@ export const useTooltip = ({
                 return;
             }
 
+            touchGestureRef.current = null;
             hideTooltip(true);
         };
 
@@ -564,11 +1083,7 @@ export const useTooltip = ({
             }
         };
 
-        document.addEventListener(
-            "pointerdown",
-            onDocumentPointerDown,
-            true,
-        );
+        document.addEventListener("pointerdown", onDocumentPointerDown, true);
         document.addEventListener("keydown", onKeyDown);
 
         window.addEventListener("resize", calculatePosition);
@@ -585,13 +1100,7 @@ export const useTooltip = ({
             window.removeEventListener("resize", calculatePosition);
             window.removeEventListener("scroll", calculatePosition, true);
         };
-    }, [
-        anchor,
-        calculatePosition,
-        hideTooltip,
-        interactive,
-        phase,
-    ]);
+    }, [anchor, calculatePosition, hideTooltip, interactive, phase]);
 
     useLayoutEffect(() => {
         if (phase === "hidden") {

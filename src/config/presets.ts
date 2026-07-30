@@ -413,7 +413,7 @@ export const presets = {
 
     hologram: createTheme({
         background:
-            "linear-gradient(115deg, rgba(34, 211, 238, 0.42), rgba(168, 85, 247, 0.35), rgba(236, 72, 153, 0.35), rgba(34, 211, 238, 0.42)), rgba(8, 47, 73, 0.72)",
+            "linear-gradient(115deg, rgba(34, 211, 238, 0.42), rgba(168, 85, 247, 0.35), rgba(236, 72, 153, 0.35), rgba(34, 211, 238, 0.42)), linear-gradient(135deg, #082f49, #312e81)",
         color: "#ecfeff",
         fontFamily: "Segoe UI, Arial, sans-serif",
         fontSize: "12px",
@@ -423,7 +423,6 @@ export const presets = {
         filter: "drop-shadow(0 0 7px rgba(34, 211, 238, 0.75)) drop-shadow(0 0 16px rgba(168, 85, 247, 0.4))",
         padding: "9px 15px",
         letterSpacing: "0.06em",
-        backdropFilter: "blur(8px)",
         arrowSize: "8px",
         arrowWidth: "18px",
         animation: animations.blur,
@@ -431,13 +430,12 @@ export const presets = {
 
     glass: createTheme({
         background:
-            "linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.07)), rgba(15, 23, 42, 0.68)",
+            "linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.07)), linear-gradient(135deg, #1e293b, #0f172a)",
         color: "#f8fafc",
         border: "1px solid rgba(255, 255, 255, 0.34)",
         borderRadius: "16px",
         filter: "drop-shadow(0 12px 20px rgba(15, 23, 42, 0.38))",
         padding: "9px 15px",
-        backdropFilter: "blur(16px)",
         arrowSize: "8px",
         arrowWidth: "18px",
         animation: animations.blur,
@@ -445,7 +443,7 @@ export const presets = {
 
     frost: createTheme({
         background:
-            "radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.85), transparent 35%), linear-gradient(135deg, rgba(224, 242, 254, 0.92), rgba(186, 230, 253, 0.72))",
+            "radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.85), transparent 35%), linear-gradient(135deg, #e0f2fe, #bae6fd)",
         color: "#075985",
         fontWeight: 600,
         border: "1px solid rgba(125, 211, 252, 0.9)",
@@ -453,7 +451,6 @@ export const presets = {
         filter: "drop-shadow(0 8px 15px rgba(14, 116, 144, 0.24))",
         padding: "9px 15px",
         textShadow: "0 1px 0 rgba(255, 255, 255, 0.8)",
-        backdropFilter: "blur(14px)",
         arrowSize: "8px",
         arrowWidth: "19px",
         animation: animations.blur,
@@ -863,7 +860,6 @@ export const presets = {
         borderRadius: "20px 8px 20px 8px",
         filter: "drop-shadow(0 10px 17px rgba(49, 46, 129, 0.48))",
         padding: "10px 16px",
-        backdropFilter: "blur(8px)",
         arrowSize: "9px",
         arrowWidth: "21px",
         animation: animations.blur,

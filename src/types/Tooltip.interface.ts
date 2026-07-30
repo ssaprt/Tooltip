@@ -11,6 +11,8 @@ export interface TooltipProviderInterface {
     selectTheme?: PresetsThemeType;
     customTheme?: ThemeType;
     animation?: TooltipAnimationOptions;
+    interactive?: boolean;
+    hideDelay?: number;
 }
 
 export interface TooltipInterface {
