@@ -625,7 +625,6 @@ export const useTooltip = ({
         pendingHideRef.current = false;
         interactiveBridgeDeadlineRef.current = 0;
         clearTooltipActivation(ownerRef.current);
-        setMounted(false);
         updatePhase("hidden");
     }, [clearEnterFrames, clearHideTimer, clearInteractiveFrame, updatePhase]);
 
