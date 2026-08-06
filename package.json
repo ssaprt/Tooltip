@@ -1,6 +1,6 @@
 {
     "name": "@ssaprt/tooltip",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "description": "A customizable React tooltip library with rich content, interactive tooltips, animations, SVG surfaces, and built-in themes.",
     "main": "dist/index.js",
     "module": "dist/index.mjs",
