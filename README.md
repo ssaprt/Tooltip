@@ -2,7 +2,7 @@
 
 A flexible, themeable, and interactive tooltip library for React and Next.js.
 
-[Web version](https://utility-lub.vercel.app/react/UI-Components/tooltip/)
+[Web version](https://utility-lab.store/react/UI-Components/tooltip/)
 
 `@ssaprt/tooltip` supports simple text hints, rich React content, interactive controls, media, custom themes, built-in animations, automatic viewport collision handling, touch interaction, and optional global presets through `TooltipProvider`.
 
