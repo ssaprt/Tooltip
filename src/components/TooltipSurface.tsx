@@ -1,15 +1,8 @@
-import {
-    CSSProperties,
-    RefObject,
-    useLayoutEffect,
-    useRef,
-    useState,
-} from "react";
+import { CSSProperties, useLayoutEffect, useRef, useState } from "react";
 
 import { TooltipPlacement } from "src/types/Tooltip.interface";
 
 type TooltipSurfaceProps = {
-    bodyRef: RefObject<HTMLDivElement | null>;
     placement: TooltipPlacement;
     arrowOffset: string;
     surfaceStyle?: CSSProperties;
@@ -384,7 +377,6 @@ const createMaskImage = (width: number, height: number, path: string) => {
 };
 
 export const TooltipSurface = ({
-    bodyRef,
     placement,
     arrowOffset,
     surfaceStyle,
@@ -396,11 +388,16 @@ export const TooltipSurface = ({
     const [metrics, setMetrics] = useState<SurfaceMetrics>(EMPTY_METRICS);
 
     useLayoutEffect(() => {
-        const body = bodyRef.current;
         const surfaceProbe = surfaceProbeRef.current;
         const arrowProbe = arrowProbeRef.current;
 
-        if (!body || !surfaceProbe || !arrowProbe) {
+        if (!surfaceProbe || !arrowProbe) {
+            return;
+        }
+
+        const body = surfaceProbe.parentElement;
+
+        if (!body) {
             return;
         }
 
@@ -420,6 +417,7 @@ export const TooltipSurface = ({
 
             const arrowHeight =
                 Number.parseFloat(arrowComputedStyle.height) || 6;
+
             const arrowWidth =
                 Number.parseFloat(arrowComputedStyle.width) || arrowHeight * 2;
 
@@ -468,6 +466,7 @@ export const TooltipSurface = ({
             });
 
             const stroke = getStrokeConfig(surfaceComputedStyle);
+
             const nextMetrics: SurfaceMetrics = {
                 ...surface,
                 ...stroke,
@@ -503,7 +502,7 @@ export const TooltipSurface = ({
             resizeObserver.disconnect();
             window.removeEventListener("resize", update);
         };
-    }, [arrowOffset, bodyRef, placement, surfaceStyle]);
+    }, [arrowOffset, placement, surfaceStyle]);
 
     const maskImage = metrics.path
         ? createMaskImage(metrics.width, metrics.height, metrics.path)

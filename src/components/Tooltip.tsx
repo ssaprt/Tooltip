@@ -223,7 +223,6 @@ export const Tooltip = ({
                           onAnimationEnd={handleAnimationEnd}
                       >
                           <TooltipSurface
-                              bodyRef={bodyRef}
                               placement={placement}
                               arrowOffset={arrowOffset}
                               surfaceStyle={resolvedThemeStyles.surfaceStyle}
