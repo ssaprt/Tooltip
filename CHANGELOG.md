@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.10] - 2026-08-07
+
+### Fixed
+
+- Fixed bugs
+
+## [1.0.9] - 2026-08-07
+
+### Fixed
+
+- Fixed bugs
+
+## [1.0.8] - 2026-08-07
+
+### Fixed
+
+- Fixed bugs
+
+## [1.0.7] - 2026-08-07
+
+### Added styles import
+
+- Added styles import
+
 ## [1.0.6] - 2026-08-06
 
 ### Fixed
